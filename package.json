@@ -5,7 +5,19 @@
     "build": "nuxt build",
     "start": "node .output/server/index.mjs"
   },
+  "dependencies": {
+    "@sketch-hq/sketch-file-format-ts": "^6.1.1",
+    "canvaskit-wasm": "^0.27.0",
+    "debug": "2.6.9",
+    "jszip": "^3.4.0",
+    "rxjs": "6.2.1",
+    "ts-invariant": "^0.6.0",
+    "bowser": "1.9.2"
+  },
   "devDependencies": {
-    "nuxt3": "latest"
+    "@types/debug": "^4.1.7",
+    "@types/jest": "^27.0.2",
+    "nuxt3": "latest",
+    "prettier": "^2.4.1"
   }
 }
