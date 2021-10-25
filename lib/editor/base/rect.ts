@@ -31,9 +31,17 @@ export class Rect {
     return ret;
   }
 
+  static fromDomRect(rect: DOMRect) {
+    return new Rect(rect.left, rect.top, rect.width, rect.height);
+  }
+
   size(width: number, height: number) {
     this.width = width;
     this.height = height;
+  }
+
+  equals(other: Rect) {
+    return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
   }
 
   clone() {

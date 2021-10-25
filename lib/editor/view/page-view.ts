@@ -21,6 +21,8 @@ export class SkyPageContainerView extends SkyBoxView {
   // left top corner
   corner: SkyBoxView;
   page: SkyPageView;
+  topRuler: Ruler;
+  leftRuler: Ruler;
   zoomState: ZoomState;
   controller!: ZoomController;
 
@@ -32,8 +34,10 @@ export class SkyPageContainerView extends SkyBoxView {
 
     this.zoomState = new ZoomState(model.frame.leftTop);
 
-    this.addChild(new Ruler(new Rect(RulerThickness, 0, this.pageBounds.width, RulerThickness), true));
-    this.addChild(new Ruler(new Rect(0, RulerThickness, RulerThickness, this.pageBounds.height), false));
+    this.topRuler = this.addChild(new Ruler(new Rect(RulerThickness, 0, this.pageBounds.width, RulerThickness), true));
+    this.leftRuler = this.addChild(
+      new Ruler(new Rect(0, RulerThickness, RulerThickness, this.pageBounds.height), false)
+    );
     this.corner = this.addChild(new CornerView(new Rect(0, 0, RulerThickness, RulerThickness)));
     this.corner.backgroundColor = sk.CanvasKit.WHITE;
 
@@ -42,6 +46,16 @@ export class SkyPageContainerView extends SkyBoxView {
     this.page = this.pageBox.addChild(new SkyPageView(model));
 
     this.initController();
+  }
+
+  layoutSelf() {
+    this.frame.width = this.ctx.frame.width;
+    this.frame.height = this.ctx.frame.height;
+
+    this.pageBox.frame = this.pageBounds;
+
+    this.topRuler.frame.width = this.frame.width;
+    this.leftRuler.frame.height = this.frame.height;
   }
 
   /**
@@ -204,7 +218,7 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     // 绘制下 checkerboard
     const translate = this.transform.position;
 
-    let viewport = ((this.parent as any) as SkyBoxView).frame;
+    let viewport = (this.parent as any as SkyBoxView).frame;
 
     // page 的 viewport ， 像素单位的
     // 转换到输出内容的坐标系。

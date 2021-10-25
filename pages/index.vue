@@ -1,12 +1,12 @@
 <template>
-  <SketchEditor />
+  <SkyEditor />
 </template>
 <script>
-import SketchEditor from '../components/sketch-editor.vue';
+import SkyEditor from '../components/sky-editor.vue';
 
 export default {
   components: {
-    SketchEditor,
+    SkyEditor,
   },
 };
 </script>

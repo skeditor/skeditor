@@ -114,6 +114,10 @@ export abstract class SkyBaseView {
 
   private _layoutDirty = true;
 
+  markLayoutDirty() {
+    this._layoutDirty = true;
+  }
+
   layout() {
     if (!this._layoutDirty) return;
 

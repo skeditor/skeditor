@@ -141,6 +141,7 @@ export default {
 }
 .canvas-container {
   flex: 1;
+  height: 0;
 }
 
 h1 {

@@ -3,6 +3,7 @@ import { Disposable } from '../base/disposable';
 
 import { SkyModel, SkyPage, ClassValue, SkySymbolMaster } from '../model';
 import sk, { CanvaskitPromised, getFontMgr } from '../util/canvaskit';
+import { GrDirectContext } from 'canvaskit-wasm';
 import { animationFrameScheduler } from 'rxjs';
 
 import type { CanvasKit as CanvasKitType, FontMgr, Surface as SkSurface, Canvas as SkCanvas } from 'canvaskit-wasm';
@@ -22,7 +23,8 @@ const DebugRenderCost = false;
 export class SkyView extends Disposable {
   static currentContext: SkyView;
 
-  canvasEl: HTMLCanvasElement;
+  canvasEl!: HTMLCanvasElement;
+  grContext!: GrDirectContext;
   rootView?: SkyPageContainerView;
 
   skSurface!: SkSurface;
@@ -59,10 +61,9 @@ export class SkyView extends Disposable {
 
   private constructor(private model: SkyModel, private foreignEl: HTMLElement) {
     super();
-    this.canvasEl = document.createElement('canvas');
 
-    this.canvasEl.style.width = '100%';
-    this.canvasEl.style.height = '100%';
+    this.createCanvasEl();
+
     this.attachParentNode(foreignEl);
 
     this._disposables.push(
@@ -73,11 +74,30 @@ export class SkyView extends Disposable {
     );
   }
 
+  private createCanvasEl() {
+    this.canvasEl = document.createElement('canvas');
+
+    this.canvasEl.style.width = '100%';
+    this.canvasEl.style.height = '100%';
+    this.canvasEl.style.display = 'block';
+
+    this.grContext = sk.CanvasKit.MakeGrContext(sk.CanvasKit.GetWebGLContext(this.canvasEl));
+  }
+
   private attachParentNode(el: HTMLElement) {
     el.appendChild(this.canvasEl);
     this.doResize();
 
     const view = this;
+
+    const ro = new ResizeObserver((entries) => {
+      this.doResize();
+    });
+    ro.observe(el);
+
+    this._disposables.push(() => {
+      ro.disconnect();
+    });
 
     // 定时渲染
     this._disposables.push(
@@ -92,18 +112,42 @@ export class SkyView extends Disposable {
   // canvasEl 保持和 parentNode 一样大
   doResize() {
     const bounds = this.canvasEl.getBoundingClientRect();
+    if (this.frame.width === bounds.width && this.frame.height === bounds.height) {
+      return;
+    }
+
     this.frame.width = bounds.width;
     this.frame.height = bounds.height;
     this.dpi = window.devicePixelRatio;
-    this.canvasEl.width = bounds.width * this.dpi;
-    this.canvasEl.height = bounds.height * this.dpi;
-    this.skSurface = sk.CanvasKit.MakeCanvasSurface(this.canvasEl)!;
+    const canvasWidth = bounds.width * this.dpi;
+    const canvasHeight = bounds.height * this.dpi;
+
+    this.canvasEl.width = canvasWidth;
+    this.canvasEl.height = canvasHeight;
+
+    this.markDirty();
+    this.rootView?.markLayoutDirty();
+  }
+
+  /**
+   * 每次绘制的时候重新创建
+   * 如果在 doResize 的时候重新创建的话。等待 raf 间隙 canvas 是空白的。
+   */
+  createSkSurfaceAndCanvas() {
+    this.skSurface?.delete();
+    // this.skCanvas?.delete();
+    this.skSurface = sk.CanvasKit.MakeOnScreenGLSurface(
+      this.grContext,
+      this.canvasEl.width,
+      this.canvasEl.height,
+      sk.CanvasKit.ColorSpace.SRGB
+    )!;
     this.skCanvas = this.skSurface.getCanvas();
+    invariant(this.skSurface, 'Cant create sk surface');
+    invariant(this.skCanvas, 'Cant create sk canvas');
   }
 
   makeOffscreenSurface(width: number, height: number) {
-    // return sk.CanvasKit.MakeSurface(width, height)!;
-
     return this.skSurface.makeSurface({
       ...this.skSurface.imageInfo(),
       width,
@@ -183,6 +227,7 @@ export class SkyView extends Disposable {
   render() {
     if (!this.dirty) return;
 
+    this.createSkSurfaceAndCanvas();
     this.skCanvas.clear(sk.CanvasKit.TRANSPARENT);
     if (this.rootView) {
       const start = Date.now();
