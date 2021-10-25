@@ -15,6 +15,8 @@ import { PointerController } from '../controller/pointer-controller';
 import { SkyBaseView } from './base';
 import { Point } from '../base/point';
 import { SkySymbolInstanceView, SkySymbolMasterView } from './symbol-view';
+import { Observable } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 // import { createImageFromTexture } from '~/lib/webgl/show-texture';
 
 const DebugPrintTree = false;
@@ -37,6 +39,7 @@ export class SkyView extends Disposable {
   // 浏览器坐标系， 包括 ruler 部分
 
   frame = new Rect();
+  surfaceFrame = new Rect();
 
   _canvasStack = [] as SkCanvas[];
 
@@ -74,13 +77,13 @@ export class SkyView extends Disposable {
     );
   }
 
+  /**
+   * canvas 应该在 resize 事件触发的时候调整大小
+   * width 和 style.width 都要手动控制以保持一致, 才能不变形。
+   */
   private createCanvasEl() {
     this.canvasEl = document.createElement('canvas');
-
-    this.canvasEl.style.width = '100%';
-    this.canvasEl.style.height = '100%';
     this.canvasEl.style.display = 'block';
-
     this.grContext = sk.CanvasKit.MakeGrContext(sk.CanvasKit.GetWebGLContext(this.canvasEl));
   }
 
@@ -90,14 +93,19 @@ export class SkyView extends Disposable {
 
     const view = this;
 
-    const ro = new ResizeObserver((entries) => {
-      this.doResize();
-    });
-    ro.observe(el);
-
-    this._disposables.push(() => {
-      ro.disconnect();
-    });
+    this._disposables.push(
+      new Observable((sub) => {
+        const ro = new ResizeObserver((entries) => {
+          sub.next();
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+      })
+        .pipe(debounceTime(200))
+        .subscribe(() => {
+          this.doResize();
+        })
+    );
 
     // 定时渲染
     this._disposables.push(
@@ -111,7 +119,7 @@ export class SkyView extends Disposable {
 
   // canvasEl 保持和 parentNode 一样大
   doResize() {
-    const bounds = this.canvasEl.getBoundingClientRect();
+    const bounds = this.foreignEl.getBoundingClientRect();
     if (this.frame.width === bounds.width && this.frame.height === bounds.height) {
       return;
     }
@@ -119,8 +127,12 @@ export class SkyView extends Disposable {
     this.frame.width = bounds.width;
     this.frame.height = bounds.height;
     this.dpi = window.devicePixelRatio;
-    const canvasWidth = bounds.width * this.dpi;
-    const canvasHeight = bounds.height * this.dpi;
+
+    this.canvasEl.style.width = bounds.width + 'px';
+    this.canvasEl.style.height = bounds.height + 'px';
+
+    const canvasWidth = this.frame.width * this.dpi;
+    const canvasHeight = this.frame.height * this.dpi;
 
     this.canvasEl.width = canvasWidth;
     this.canvasEl.height = canvasHeight;
@@ -135,7 +147,6 @@ export class SkyView extends Disposable {
    */
   createSkSurfaceAndCanvas() {
     this.skSurface?.delete();
-    // this.skCanvas?.delete();
     this.skSurface = sk.CanvasKit.MakeOnScreenGLSurface(
       this.grContext,
       this.canvasEl.width,
