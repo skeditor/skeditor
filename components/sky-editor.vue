@@ -11,8 +11,9 @@
       </select>
 
       <div class="flex-auto"></div>
-      <button>a</button>
+      <button>open</button>
       <button>b</button>
+      <FileButton @pick="onPickFile" />
     </nav>
     <div class="canvas-container" ref="canvasContainer"> </div>
     <!-- <DocOutline /> -->
@@ -22,31 +23,33 @@
 <script lang="ts">
 import JSZip from 'jszip';
 import { CanvaskitPromised } from '../lib/editor/util/canvaskit';
-// import Vue from 'vue';
 import { SkyModel } from '../lib/editor/model';
 import { SkyView } from '../lib/editor/view';
+import { defineComponent } from 'vue';
+import FileButton from './file-button.vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
 
-async function loadSketchFile(url: string, el: HTMLElement) {
-  return fetch(url)
-    .then((res) => {
-      if (res.status !== 200) {
-        return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
-      }
-      return res.arrayBuffer();
-    })
-    .then((buffer) => {
-      return JSZip.loadAsync(buffer);
-    })
-    .then(async (zipFile) => {
-      await CanvaskitPromised;
-      const skyModel = new SkyModel();
-      await skyModel.readZipFile(zipFile);
-      const view = await SkyView.create(skyModel, el);
-      return [view, skyModel] as [SkyView, SkyModel];
-    });
+async function loadSketchFile(url: string) {
+  return fetch(url).then((res) => {
+    if (res.status !== 200) {
+      return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
+    }
+    return res.arrayBuffer();
+  });
+}
+
+function openSketchArrayBuffer(buffer: ArrayBuffer, el: HTMLElement) {
+  return JSZip.loadAsync(buffer).then(async (zipFile) => {
+    console.log('>>> open', zipFile);
+
+    await CanvaskitPromised;
+    const skyModel = new SkyModel();
+    await skyModel.readZipFile(zipFile);
+    const view = await SkyView.create(skyModel, el);
+    return [view, skyModel] as [SkyView, SkyModel];
+  });
 }
 
 declare var window: Window &
@@ -54,7 +57,10 @@ declare var window: Window &
     skyView?: SkyView;
   };
 
-export default {
+export default defineComponent({
+  components: {
+    FileButton,
+  },
   data() {
     return {
       list: [],
@@ -83,9 +89,12 @@ export default {
   },
   methods: {
     loadFile(this: any) {
-      window.skyView?.dispose();
+      loadSketchFile(api + this.selectedFile).then((buffer) => this.openSketch(buffer));
+    },
 
-      loadSketchFile(api + this.selectedFile, this.$refs['canvasContainer'] as HTMLElement)
+    openSketch(buffer: ArrayBuffer) {
+      window.skyView?.dispose();
+      openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement)
         .then(async ([view, model]) => {
           window.skyView = view;
           this.pages = model.pages.map((page) => {
@@ -108,7 +117,6 @@ export default {
 
     onPageChange(this: any) {
       localStorage.setItem('lastChosePage', this.selectedPage + '');
-      // this.loadFile();
       this.renderPage();
     },
 
@@ -120,8 +128,11 @@ export default {
       }
       window.skyView?.renderPage(idx);
     },
+    onPickFile(file: File) {
+      file.arrayBuffer().then((buffer) => this.openSketch(buffer));
+    },
   },
-};
+});
 </script>
 <style scoped>
 .page {

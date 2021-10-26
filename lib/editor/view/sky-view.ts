@@ -153,8 +153,8 @@ export class SkyView extends Disposable {
       this.canvasEl.height,
       sk.CanvasKit.ColorSpace.SRGB
     )!;
-    this.skCanvas = this.skSurface.getCanvas();
     invariant(this.skSurface, 'Cant create sk surface');
+    this.skCanvas = this.skSurface.getCanvas();
     invariant(this.skCanvas, 'Cant create sk canvas');
   }
 
