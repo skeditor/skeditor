@@ -15,7 +15,10 @@
       <button>b</button>
       <FileButton @pick="onPickFile" />
     </nav>
-    <div class="canvas-container" ref="canvasContainer"> </div>
+    <div class="editor-body">
+      <Outline />
+      <div class="canvas-container" ref="canvasContainer"> </div>
+    </div>
     <!-- <DocOutline /> -->
     <!-- <Render /> -->
   </section>
@@ -27,6 +30,7 @@ import { SkyModel } from '../lib/editor/model';
 import { SkyView } from '../lib/editor/view';
 import { defineComponent } from 'vue';
 import FileButton from './file-button.vue';
+import Outline from './outline/index.vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
@@ -60,6 +64,7 @@ declare var window: Window &
 export default defineComponent({
   components: {
     FileButton,
+    Outline,
   },
   data() {
     return {
@@ -150,9 +155,16 @@ export default defineComponent({
   z-index: 1000;
   position: relative;
 }
-.canvas-container {
+
+.editor-body {
   flex: 1;
   height: 0;
+  display: flex;
+}
+
+.canvas-container {
+  flex: 1;
+  width: 0;
 }
 
 h1 {
