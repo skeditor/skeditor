@@ -28,6 +28,10 @@ export class EditorState {
     return this.viewRef.value;
   }
 
+  get selectedPageModel() {
+    return this.model?.pages[this.selectedPageIndex.value];
+  }
+
   selectPage = (idx: number) => {
     this.selectedPageIndex.value = idx;
     this.view?.renderPage(idx);

@@ -20,5 +20,7 @@ const { width, onDragStart, onOffset } = setupOutline();
 .outline {
   position: relative;
   background: #e6e6e6;
+  display: flex;
+  flex-direction: column;
 }
 </style>
