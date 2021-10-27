@@ -11,8 +11,7 @@
       </select>
 
       <div class="flex-auto"></div>
-      <button>open</button>
-      <button>b</button>
+      <button>Save</button>
       <FileButton @pick="onPickFile" />
     </nav>
     <div class="editor-body">

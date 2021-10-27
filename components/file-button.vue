@@ -1,6 +1,6 @@
 <template>
   <input ref="input" @change="onFilePicked" type="file" accept=".sketch" style="display: none" />
-  <button @click="onClick">Open file</button>
+  <button @click="onClick">Open File</button>
 </template>
 
 <script setup lang="ts">

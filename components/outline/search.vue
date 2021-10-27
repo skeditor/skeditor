@@ -27,6 +27,7 @@
 }
 
 .search-input {
+  width: 0;
   flex: 1;
   background: none;
   outline: none;

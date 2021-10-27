@@ -1,23 +1,41 @@
 <template>
-  <div class="pages" style="height: 150px">
+  <div class="pages" :style="`height: ${height}px;`">
     <div class="bar">页面</div>
     <hr />
     <PerfectScrollbar>
       <div class="page-item" v-for="i in 10"> hello </div>
     </PerfectScrollbar>
     <hr />
+    <Sash :side="'bottom'" @dragStart="onDragStart" @offset="onOffset" />
   </div>
 </template>
-<script setup lang="ts">
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
+<script lang="ts">
+const InitHeight = 150;
+const MinHeight = 150;
 </script>
-<style src="vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css"></style>
+<script setup lang="ts">
+import { ref } from 'vue';
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
+import Sash from '~/components/ui/sash.vue';
+
+const height = ref(InitHeight);
+
+let _dragStartHeight = 0;
+
+function onDragStart() {
+  _dragStartHeight = height.value;
+}
+
+function onOffset(offset: number) {
+  height.value = Math.max(_dragStartHeight + offset, MinHeight);
+}
+</script>
 
 <style scoped>
 .pages {
-  padding: 8px 0;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .bar {
   font-size: 14px;
