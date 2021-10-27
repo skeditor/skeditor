@@ -3,7 +3,14 @@
     <div class="bar">页面</div>
     <hr />
     <PerfectScrollbar>
-      <div class="page-item" v-for="i in 10"> hello </div>
+      <div
+        class="page-item"
+        :class="{ ['page-item__active']: idx === selectedPageIndex }"
+        v-for="(page, idx) in pagesRef"
+        @click="selectPage(idx)"
+      >
+        {{ page }}
+      </div>
     </PerfectScrollbar>
     <hr />
     <Sash :side="'bottom'" @dragStart="onDragStart" @offset="onOffset" />
@@ -13,6 +20,9 @@
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 import Sash from '~/components/ui/sash.vue';
 import { setupPages } from './pages-business';
+import { useEditor } from '~/components/editor-state';
+
+const { pagesRef, selectedPageIndex, selectPage } = useEditor();
 
 const { height, onDragStart, onOffset } = setupPages();
 </script>
@@ -42,9 +52,15 @@ const { height, onDragStart, onOffset } = setupPages();
   display: flex;
   align-items: center;
   margin: 0 8px;
+  cursor: default;
+}
+
+.page-item__active {
+  background-color: black;
+  color: white;
 }
 .page-item:hover {
-  background-color: #cbccd9;
+  /* background-color: #cbccd9; */
 }
 
 hr {

@@ -52,14 +52,14 @@ export class SkyView extends Disposable {
    * 由于需要确保 canvaskit 初始化完成，不能直接调用构造函数
    */
   static async create(model: SkyModel, foreignEl: HTMLElement) {
-    return await CanvaskitPromised.then(() => {
-      return getFontMgr();
-    }).then((fontMgr) => {
-      const skyView = new SkyView(model, foreignEl);
-      skyView.fontMgr = fontMgr;
-      SkyView.currentContext = skyView;
-      return skyView;
-    });
+    await CanvaskitPromised;
+
+    const fontMgr = await getFontMgr();
+
+    const skyView = new SkyView(model, foreignEl);
+    skyView.fontMgr = fontMgr;
+    SkyView.currentContext = skyView;
+    return skyView;
   }
 
   private constructor(private model: SkyModel, private foreignEl: HTMLElement) {

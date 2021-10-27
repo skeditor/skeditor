@@ -6,10 +6,6 @@
         <option v-for="(file, idx) in list" :key="idx">{{ file }}</option>
       </select>
 
-      <select v-model="selectedPage" @change="onPageChange">
-        <option v-for="(file, idx) in pages" :key="idx">{{ file }}</option>
-      </select>
-
       <div class="flex-auto"></div>
       <button>Save</button>
       <FileButton @pick="onPickFile" />
@@ -28,6 +24,7 @@ import { defineComponent } from 'vue';
 import FileButton from './file-button.vue';
 import Outline from './outline/outline.vue';
 import { EditorState } from './editor-state';
+import { watch } from 'vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
@@ -66,6 +63,10 @@ export default defineComponent({
 
   mounted() {
     this.fetchLocalSketchFileList();
+
+    watch(EditorState.shared.selectedPageIndex, (idx) => {
+      localStorage.setItem('lastChosePage', this.pages[idx] + '');
+    });
   },
   methods: {
     fetchLocalSketchFileList() {
@@ -73,6 +74,7 @@ export default defineComponent({
         .then(
           (res) => res.json(),
           (err) => {
+            console.error(err);
             console.log('Cant find local files, please select or drop a file on this web app.');
           }
         )
@@ -89,16 +91,14 @@ export default defineComponent({
       loadSketchFile(api + this.selectedFile)
         .then((buffer) => this.openSketch(buffer))
         .catch((err) => {
+          console.error(err);
           console.log('Cant load local files. Please check local development env.');
         });
     },
 
     async openSketch(buffer: ArrayBuffer) {
       await EditorState.shared.openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement);
-      this.pages =
-        EditorState.shared.model?.pages.map((page) => {
-          return page.name;
-        }) || [];
+      this.pages = EditorState.shared.pages;
       if (!this.selectedPage) {
         this.selectedPage = this.pages[0];
       }
@@ -110,18 +110,14 @@ export default defineComponent({
       this.loadFile();
     },
 
-    onPageChange(this: any) {
-      localStorage.setItem('lastChosePage', this.selectedPage + '');
-      this.renderPage();
-    },
-
     renderPage(this: any) {
       let idx = this.pages.indexOf(this.selectedPage);
       if (idx === -1) {
         idx = 0;
         this.selectedPage = this.pages[0];
       }
-      EditorState.shared.view?.renderPage(idx);
+
+      EditorState.shared.selectPage(idx);
     },
     onPickFile(file: File) {
       file.arrayBuffer().then((buffer) => this.openSketch(buffer));
