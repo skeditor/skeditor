@@ -23,13 +23,11 @@
   </section>
 </template>
 <script lang="ts">
-import JSZip from 'jszip';
-import { CanvaskitPromised } from '../lib/editor/util/canvaskit';
-import { SkyModel } from '../lib/editor/model';
 import { SkyView } from '../lib/editor/view';
 import { defineComponent } from 'vue';
 import FileButton from './file-button.vue';
-import Outline from './outline/index.vue';
+import Outline from './outline/outline.vue';
+import { EditorState } from './editor-state';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
@@ -40,18 +38,6 @@ async function loadSketchFile(url: string) {
       return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
     }
     return res.arrayBuffer();
-  });
-}
-
-function openSketchArrayBuffer(buffer: ArrayBuffer, el: HTMLElement) {
-  return JSZip.loadAsync(buffer).then(async (zipFile) => {
-    console.log('>>> open', zipFile);
-
-    await CanvaskitPromised;
-    const skyModel = new SkyModel();
-    await skyModel.readZipFile(zipFile);
-    const view = await SkyView.create(skyModel, el);
-    return [view, skyModel] as [SkyView, SkyModel];
   });
 }
 
@@ -70,7 +56,6 @@ export default defineComponent({
       list: [],
       pages: [] as string[],
       selectedFile: (localStorage.getItem('lastChooseFile') || '') as string,
-
       selectedPage: (localStorage.getItem('lastChosePage') || '') as string,
     };
   },
@@ -80,38 +65,44 @@ export default defineComponent({
   },
 
   mounted() {
-    fetch(docLists)
-      .then((res) => res.json())
-      .then((val) => {
-        this.list = val;
-        if (!this.selectedFile) {
-          this.selectedFile = val[0];
-        }
-
-        this.loadFile();
-      });
+    this.fetchLocalSketchFileList();
   },
   methods: {
+    fetchLocalSketchFileList() {
+      return fetch(docLists)
+        .then(
+          (res) => res.json(),
+          (err) => {
+            console.log('Cant find local files, please select or drop a file on this web app.');
+          }
+        )
+        .then((val) => {
+          this.list = val;
+          if (!this.selectedFile) {
+            this.selectedFile = val[0];
+          }
+
+          this.loadFile();
+        });
+    },
     loadFile(this: any) {
-      loadSketchFile(api + this.selectedFile).then((buffer) => this.openSketch(buffer));
+      loadSketchFile(api + this.selectedFile)
+        .then((buffer) => this.openSketch(buffer))
+        .catch((err) => {
+          console.log('Cant load local files. Please check local development env.');
+        });
     },
 
-    openSketch(buffer: ArrayBuffer) {
-      window.skyView?.dispose();
-      openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement)
-        .then(async ([view, model]) => {
-          window.skyView = view;
-          this.pages = model.pages.map((page) => {
-            return page.name;
-          });
-          if (!this.selectedPage) {
-            this.selectedPage = this.pages[0];
-          }
-          this.renderPage();
-        })
-        .catch((err) => {
-          console.error('Cant load sketch file', err);
-        });
+    async openSketch(buffer: ArrayBuffer) {
+      await EditorState.shared.openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement);
+      this.pages =
+        EditorState.shared.model?.pages.map((page) => {
+          return page.name;
+        }) || [];
+      if (!this.selectedPage) {
+        this.selectedPage = this.pages[0];
+      }
+      this.renderPage();
     },
 
     onFileChange(this: any) {
@@ -130,7 +121,7 @@ export default defineComponent({
         idx = 0;
         this.selectedPage = this.pages[0];
       }
-      window.skyView?.renderPage(idx);
+      EditorState.shared.view?.renderPage(idx);
     },
     onPickFile(file: File) {
       file.arrayBuffer().then((buffer) => this.openSketch(buffer));

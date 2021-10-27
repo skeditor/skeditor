@@ -1,10 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "nuxt dev & node scripts/serve-sketch-files.js",
     "build": "nuxt build",
     "start": "node .output/server/index.mjs",
-    "link-local": "npm link canvaskit-wasm"
+    "link-dep": "npm link canvaskit-wasm"
   },
   "dependencies": {
     "@sketch-hq/sketch-file-format-ts": "^6.1.1",
@@ -19,6 +19,8 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/jest": "^27.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
     "nuxt3": "latest",
     "prettier": "^2.4.1"
   }

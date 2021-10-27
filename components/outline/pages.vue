@@ -9,26 +9,12 @@
     <Sash :side="'bottom'" @dragStart="onDragStart" @offset="onOffset" />
   </div>
 </template>
-<script lang="ts">
-const InitHeight = 150;
-const MinHeight = 150;
-</script>
 <script setup lang="ts">
-import { ref } from 'vue';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 import Sash from '~/components/ui/sash.vue';
+import { setupPages } from './pages-business';
 
-const height = ref(InitHeight);
-
-let _dragStartHeight = 0;
-
-function onDragStart() {
-  _dragStartHeight = height.value;
-}
-
-function onOffset(offset: number) {
-  height.value = Math.max(_dragStartHeight + offset, MinHeight);
-}
+const { height, onDragStart, onOffset } = setupPages();
 </script>
 
 <style scoped>

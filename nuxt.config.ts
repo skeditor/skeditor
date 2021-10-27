@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     },
   ],
   css: ['~/assets/global.css', 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css'],
+  plugins: ['~/plugins/config.client.ts'],
   build: {
     // extend(config) {
     //   console.log('>>>> got config');
