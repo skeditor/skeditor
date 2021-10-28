@@ -1,8 +1,9 @@
 import JSZip from 'jszip';
-import { SkyBaseGroup, SkyBaseLayer, SkyModel } from '~/lib/editor/model';
-import { SkyView } from '~/lib/editor/view';
+import { SkyBaseGroup, SkyBaseLayer, SkyBaseShapeLike, SkyModel } from '~/lib/editor/model';
+import { SkyBasePathView, SkyView } from '~/lib/editor/view';
 import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
 import { computed, shallowRef, ref } from 'vue';
+import { Rect } from '~/lib/editor/base/rect';
 export class EditorState {
   static shared = new EditorState();
 
@@ -67,6 +68,19 @@ export class EditorState {
     layer.isOutlineExpanded = !layer.isOutlineExpanded;
     this.outlineChangeEvent.value++;
   };
+
+  getPathIcon(layer: SkyBaseLayer) {
+    const id = layer.objectId;
+    const layerView = this.view?.getViewByModelId(id);
+    if (layerView instanceof SkyBasePathView && layerView.path) {
+      const bounds = Rect.fromSk(layerView.path.getBounds());
+      const path = layerView.pathAsSvg;
+      return {
+        bounds,
+        path,
+      };
+    }
+  }
 }
 
 export function useEditor() {

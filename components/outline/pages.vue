@@ -41,6 +41,7 @@ const { height, onDragStart, onOffset } = setupPages();
 .ps {
   height: 0;
   flex: 1;
+  padding: 4px 0;
 }
 
 .page-item {

@@ -1,21 +1,19 @@
 <template>
   <section class="page">
     <nav class="nav">
-      <h1>SkyEditor</h1>
-      <select v-model="selectedFile" @change="onFileChange">
+      <h1>Sketch Editor</h1>
+      <select v-if="list && list.length" v-model="selectedFile" @change="onFileChange">
         <option v-for="(file, idx) in list" :key="idx">{{ file }}</option>
       </select>
 
       <div class="flex-auto"></div>
-      <button>Save</button>
+      <!-- <button>Save</button> -->
       <FileButton @pick="onPickFile" />
     </nav>
     <div class="editor-body">
       <Outline />
       <div class="canvas-container" ref="canvasContainer"> </div>
     </div>
-    <!-- <DocOutline /> -->
-    <!-- <Render /> -->
   </section>
 </template>
 <script lang="ts">

@@ -1,23 +1,17 @@
-import debug from 'debug';
 import { Disposable } from '../base/disposable';
-
-import { SkyModel, SkyPage, ClassValue, SkySymbolMaster } from '../model';
+import { SkyModel } from '../model';
 import sk, { CanvaskitPromised, getFontMgr } from '../util/canvaskit';
 import { GrDirectContext } from 'canvaskit-wasm';
 import { animationFrameScheduler } from 'rxjs';
-
-import type { CanvasKit as CanvasKitType, FontMgr, Surface as SkSurface, Canvas as SkCanvas } from 'canvaskit-wasm';
-
-import { SkyPageView, SkyPageContainerView } from './page-view';
+import type { FontMgr, Surface as SkSurface, Canvas as SkCanvas } from 'canvaskit-wasm';
+import { SkyPageContainerView } from './page-view';
 import { Rect } from '../base/rect';
 import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
-import { SkyBaseView } from './base';
-import { Point } from '../base/point';
-import { SkySymbolInstanceView, SkySymbolMasterView } from './symbol-view';
+import { SkySymbolInstanceView } from './symbol-view';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-// import { createImageFromTexture } from '~/lib/webgl/show-texture';
+import { SkyBaseLayerView } from '.';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -47,6 +41,8 @@ export class SkyView extends Disposable {
   // 在 render 的时候使用，后续可以改成放在 renderCtx 中。
   symbolContext?: SkySymbolInstanceView;
   _symbolContextStack: SkySymbolInstanceView[] = [];
+
+  viewMap = new Map<string, SkyBaseLayerView>();
 
   /**
    * 由于需要确保 canvaskit 初始化完成，不能直接调用构造函数
@@ -291,5 +287,13 @@ export class SkyView extends Disposable {
         // createImageFromTexture(idx, ctx, t, 4096, 4096);
       });
     }
+  }
+
+  registerLayer(objectId: string, layerView: SkyBaseLayerView) {
+    this.viewMap.set(objectId, layerView);
+  }
+
+  getViewByModelId(id: string) {
+    return this.viewMap.get(id);
   }
 }

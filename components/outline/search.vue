@@ -2,7 +2,7 @@
   <div class="search">
     <img class="search-icon" src="~@/assets/imgs/img.magnifying.glass.triangle.down.17_Normal@2x.png" />
     <input class="search-input" :placeholder="'Search Layers'" />
-    <div class="close-icon"></div>
+    <!-- <div class="close-icon"></div> -->
   </div>
 </template>
 

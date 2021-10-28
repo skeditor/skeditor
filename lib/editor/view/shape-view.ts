@@ -36,7 +36,7 @@ import { CacheGetter } from '../util/misc';
 // shapeGroup 下的 path 刚好也不用 render， 单个 shapePath 也在 render 的时候 scale
 
 type SkyBasePath = SkyShapeGroup | SkyBaseShapeLike;
-abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> extends SkyBaseLayerView<T> {
+export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> extends SkyBaseLayerView<T> {
   children!: (SkyShapePathLikeView | SkyTextView)[];
   path?: SkPath;
   _painter?: PathPainter;
@@ -151,6 +151,11 @@ abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> extends SkyB
     return this.model.inflateFrame(rawFrame);
   }
 
+  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
+  get pathAsSvg() {
+    return this.path?.toSVGString();
+  }
+
   updateTransform() {
     if (this._appliedSymbolScale) {
       this.transform.position.set(this.scaleOffsetX, this.scaleOffsetY);
@@ -195,11 +200,14 @@ export class SkyShapeGroupView extends SkyBasePathView<SkyShapeGroup> {
     if (!this.children.length) return;
 
     const firstChild = this.children[0];
-    const ret = firstChild.path;
+    let ret = firstChild.path;
     if (this.children.length === 1) return ret;
 
+    if (!ret) return;
+
+    ret = ret.copy();
     const { frame } = firstChild;
-    ret?.offset(frame.x, frame.y);
+    ret.offset(frame.x, frame.y);
 
     this.children.slice(1).reduce((resultPath: SkPath | undefined, child: SkyShapePathLikeView | SkyTextView) => {
       const opPath = child.path;

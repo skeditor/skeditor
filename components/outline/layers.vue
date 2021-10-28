@@ -13,7 +13,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { RecycleScroller } from 'vue-virtual-scroller';
 import { userPerfectScrollbar } from '~/components/ui/scrollbar-composable';
 import { useEditor } from '~/components/editor-state';
@@ -23,7 +23,13 @@ const scrollerRef = ref();
 const realElRef = computed(() => scrollerRef.value?.$el);
 userPerfectScrollbar(realElRef);
 
-const { outlineListRef, onToggleOutlineGroup } = useEditor();
+const { outlineListRef, onToggleOutlineGroup, selectedPageIndex } = useEditor();
+
+watch(selectedPageIndex, () => {
+  if (realElRef.value) {
+    (realElRef.value as HTMLElement).scrollTop = 0;
+  }
+});
 </script>
 <style scoped>
 .layers {

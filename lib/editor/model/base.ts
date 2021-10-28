@@ -319,13 +319,14 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
   }
 
   getOutlineList(ret: SkyBaseLayer[], depth = 0) {
-    this.layers.forEach((layer) => {
+    for (let i = this.layers.length - 1; i >= 0; i--) {
+      const layer = this.layers[i];
       layer.depth = depth;
       ret.push(layer);
       if (layer instanceof SkyBaseGroup && layer.isOutlineExpanded) {
         layer.getOutlineList(ret, depth + 1);
       }
-    });
+    }
   }
 }
 
