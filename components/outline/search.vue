@@ -1,8 +1,8 @@
 <template>
   <div class="search">
-    <div class="search-icon"></div>
-    <input class="search-input" />
-    <div class="search-icon"></div>
+    <img class="search-icon" src="~@/assets/imgs/img.magnifying.glass.triangle.down.17_Normal@2x.png" />
+    <input class="search-input" :placeholder="'Search Layers'" />
+    <div class="close-icon"></div>
   </div>
 </template>
 
@@ -20,6 +20,12 @@
 }
 
 .search-icon {
+  width: 17px;
+  height: 17px;
+  align-self: center;
+}
+
+.close-icon {
   width: 8px;
   height: 8px;
   background-color: red;
@@ -32,5 +38,9 @@
   background: none;
   outline: none;
   border: none;
+  padding: 0;
+  margin-left: 4px;
+  margin-bottom: -2px;
+  font-size: 12px;
 }
 </style>

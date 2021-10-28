@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { SkyModel } from '~/lib/editor/model';
+import { SkyBaseGroup, SkyBaseLayer, SkyModel } from '~/lib/editor/model';
 import { SkyView } from '~/lib/editor/view';
 import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
 import { computed, shallowRef, ref } from 'vue';
@@ -14,6 +14,17 @@ export class EditorState {
   pagesRef = computed(() => {
     const model = this.modelRef.value;
     return model?.pages.map((page) => page.name) || [];
+  });
+
+  private outlineChangeEvent = ref(0);
+
+  outlineListRef = computed(() => {
+    if (this.outlineChangeEvent.value < 0) return [];
+    const model = this.modelRef.value;
+    const page = model?.pages[this.selectedPageIndex.value];
+    const ret = [] as SkyBaseLayer[];
+    page?.getOutlineList(ret);
+    return ret;
   });
 
   get pages() {
@@ -51,6 +62,11 @@ export class EditorState {
     this.viewRef.value = view;
     this.modelRef.value = model;
   }
+
+  onToggleOutlineGroup = (layer: SkyBaseGroup) => {
+    layer.isOutlineExpanded = !layer.isOutlineExpanded;
+    this.outlineChangeEvent.value++;
+  };
 }
 
 export function useEditor() {

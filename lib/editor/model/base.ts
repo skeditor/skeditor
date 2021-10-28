@@ -103,6 +103,7 @@ export abstract class SkyBaseObject<T extends SketchFormat.AnyObject> {
  * Layer 基类，拥有 frame、scale、rotation 等等
  */
 export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchFormat.AnyLayer> extends SkyBaseObject<T> {
+  depth = 0;
   parent?: SkyBaseLayer;
 
   frame = new Rect();
@@ -247,6 +248,8 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
  * group 基类，带有 children/layers
  */
 export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchFormat.AnyGroup> extends SkyBaseLayer<T> {
+  isOutlineExpanded = false;
+
   layers: (
     | SkyGroup
     | SkyShapeGroup
@@ -313,6 +316,16 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
 
     // Todo, use addChild
     this.layers.forEach((layer) => (layer.parent = this));
+  }
+
+  getOutlineList(ret: SkyBaseLayer[], depth = 0) {
+    this.layers.forEach((layer) => {
+      layer.depth = depth;
+      ret.push(layer);
+      if (layer instanceof SkyBaseGroup && layer.isOutlineExpanded) {
+        layer.getOutlineList(ret, depth + 1);
+      }
+    });
   }
 }
 

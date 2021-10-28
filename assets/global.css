@@ -8,3 +8,19 @@
   cursor: move;
   cursor: -webkit-grabbing;
 }
+
+.text-overflow {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flex-h-auto {
+  width: 0;
+  flex: 1;
+}
+
+.flex-v-auto {
+  height: 0;
+  flex: 1;
+}
