@@ -132,7 +132,6 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
 
       this.scaledFrame = newFrame;
 
-      // this.setIgnoreRotation(true);
       this._appliedSymbolScale = true;
     } else {
       this._appliedSymbolScale = false;

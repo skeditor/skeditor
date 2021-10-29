@@ -237,12 +237,12 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   calcOffsetAfterScale(newBounds: Rect, oldBounds?: Rect) {
-    const parent = this.parent as SkyBaseLayerView;
+    const parent = this.parent!;
 
     const instanceFrame = parent.frame;
     const masterFrame = parent.intrinsicFrame;
 
-    const curFrame = oldBounds || this.frame;
+    const curFrame = oldBounds || this.intrinsicFrame;
 
     let newX = curFrame.x;
     let newY = curFrame.y;
@@ -403,11 +403,14 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   canQuickReject = true;
 
   layout() {
+    super.layout();
+
     // 在 layout 的时候更新下 transform，不然 bounds 算不对。
+    // 应该放在 super.layout 之后，因为 layout 中会计算 instance 造成的缩放和偏移
+    // 这个地方后面可能还会遇到坑
     if (this._transformDirty) {
       this.updateTransform();
     }
-    super.layout();
   }
 
   // 只给外部调用，不支持继承
