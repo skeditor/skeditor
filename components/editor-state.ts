@@ -10,7 +10,7 @@ export class EditorState {
   modelRef = shallowRef<SkyModel>();
   viewRef = shallowRef<SkyView>();
 
-  selectedPageIndex = ref(0);
+  selectedPageIndex = ref(-1);
 
   pagesRef = computed(() => {
     const model = this.modelRef.value;
@@ -45,11 +45,19 @@ export class EditorState {
   }
 
   selectPage = (idx: number) => {
+    if (idx === this.selectedPageIndex.value) {
+      return;
+    }
     this.selectedPageIndex.value = idx;
     this.view?.renderPage(idx);
   };
 
+  private reset() {
+    this.selectedPageIndex.value = -1;
+  }
+
   async openSketchArrayBuffer(arrayBuffer: ArrayBuffer, el: HTMLElement) {
+    this.reset();
     // dispose previous view
     // but not set to undefined now
     this.viewRef.value?.dispose();

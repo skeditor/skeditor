@@ -16,6 +16,7 @@ import sk, { SkImageFilter } from '../util/canvaskit';
 import { CacheGetter } from '../util/misc';
 
 export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> extends SkyBaseView {
+  children!: SkyBaseLayerView[];
   layerUpdateId = 100;
 
   parent?: SkyBaseLayerView;
@@ -146,7 +147,6 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
     const parent = this.parent;
 
-    // Todo 这个可能有问题， 如果我在某个 layer 中用了 SkyBoxView 的话。
     // 目前就只在 master 上用了，所以对 instance layout 影响不大
     if (!(parent instanceof SkyBaseLayerView)) return;
     if (!parent.isFrameScaled) return;

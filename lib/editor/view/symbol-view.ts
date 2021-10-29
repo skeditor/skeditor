@@ -73,41 +73,5 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
 export class SkySymbolMasterView extends SkyArtboardView {
   constructor(model: SkySymbolMaster) {
     super(model);
-
-    this.box.clip = false;
-  }
-
-  // 这个地方是确实挺蛋疼的，layer 下面就不应该用 box view
-  @CacheGetter<SkySymbolInstanceView>((ins) => ins.layerUpdateId)
-  get renderFrame() {
-    return this.calcChildrenRenderFrame(this.box.children as SkyBaseLayerView[]);
   }
 }
-
-// export class SkySymbolMasterView extends SkyBaseLayerView<SkySymbolMaster> {
-
-// constructor(model: SkyArtboard) {
-//   super(model);
-
-//   this.box = new SkyBoxView(this.frame.onlySize);
-//   this.box.backgroundColor = this.model.hasBackgroundColor ? this.model.backgroundColor.skColor : sk.CanvasKit.WHITE;
-//   this.box.shadow = SkyShadow.create(sk.CanvasKit.Color(0, 0, 0, 0.3), 4, 0, 1);
-
-//   this.box.children = this.children;
-//   this.children = [this.box];
-
-//   this.titleView = this.addChild(
-//     new SkySimpleTextView({
-//       text: this.model.name,
-//       color: sk.CanvasKit.parseColorString('#929292'),
-//       size: 12,
-//     })
-//   );
-
-//   this.titleView.frame.y = -this.titleView.frame.height;
-// }
-
-// _render() {
-//   this.renderChildren();
-// }
-// }

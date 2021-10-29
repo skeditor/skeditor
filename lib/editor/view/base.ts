@@ -111,27 +111,17 @@ export abstract class SkyBaseView {
   }
 
   protected renderChildren() {
-    // const { skCanvas } = this.ctx;
-
-    let clipCount = 0;
-
-    let isClipping = false;
+    // 这里叫 mask 比 clip 好点
+    let isMasking = false;
 
     const { skCanvas } = this.ctx;
 
     for (let i = 0; i < this.children.length; i++) {
       const childView = this.children[i];
 
-      // const childClipPath = childView.clipPath;
-
-      // 即使不可见也应该能够 clip
-      // if (childClipPath) {
-      //   skCanvas.clipPath(childClipPath, sk.CanvasKit.ClipOp.Intersect, false);
-      // }
-
-      if ((childView.hasClip || childView.breakClipChain) && isClipping) {
+      if ((childView.hasClip || childView.breakClipChain) && isMasking) {
         skCanvas.restore();
-        isClipping = false;
+        isMasking = false;
       }
 
       if (childView.visible) {
@@ -141,17 +131,13 @@ export abstract class SkyBaseView {
       if (childView.hasClip) {
         skCanvas.save();
         childView.tryClip();
-        isClipping = true;
+        isMasking = true;
       }
     }
 
-    if (isClipping) {
+    if (isMasking) {
       skCanvas.restore();
     }
-    // while (clipCount--) {
-    // skCanvas.restore();
-    // }
-    // skCanvas.restoreToCount()
   }
 
   debugString() {
