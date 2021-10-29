@@ -7,12 +7,17 @@ let viewId = 0;
 //   cullRect: Rect;
 // }
 
+/**
+ * Todo
+ * 1 ctx 考虑拆除去
+ * 2 继续精简下，看看 layout 是不是需要放在这里
+ */
 export abstract class SkyBaseView {
   id: number;
-  children: SkyBaseView[] = [];
-
   ctx: SkyView;
+
   parent?: SkyBaseView;
+  children: SkyBaseView[] = [];
 
   constructor() {
     this.ctx = SkyView.currentContext;
@@ -26,23 +31,6 @@ export abstract class SkyBaseView {
   get visible() {
     return true;
   }
-
-  // get clipPath(): SkPath | undefined {
-  //   return undefined;
-  // }
-
-  // 作用在 siblings 之间
-  get breakClipChain() {
-    return false;
-  }
-
-  get hasClip() {
-    return false;
-  }
-
-  // clip 需要在 render 之后
-  // 比较蛋疼的一点是，如果 clip 的时候需要 transform ，那么 restore 的时候会把 clip 也 清除掉
-  tryClip() {}
 
   prependChild<T extends SkyBaseView>(child: T): T {
     child.parent = this;
@@ -62,10 +50,6 @@ export abstract class SkyBaseView {
   abstract containsPoint(point: Point): boolean;
 
   abstract parentToLocal(pt: Point): Point;
-  // {
-  // const localPt = this.transform.localTransform.applyInverse(pt);
-
-  // }
 
   // pt 在 parent 坐标系中
   findView(pt: Point) {
@@ -104,36 +88,6 @@ export abstract class SkyBaseView {
 
       // 不可见还是要 layout 的，因为可能有 mask
       childView.layout();
-    }
-  }
-
-  protected renderChildren() {
-    // 这里叫 mask 比 clip 好点
-    let isMasking = false;
-
-    const { skCanvas } = this.ctx;
-
-    for (let i = 0; i < this.children.length; i++) {
-      const childView = this.children[i];
-
-      if ((childView.hasClip || childView.breakClipChain) && isMasking) {
-        skCanvas.restore();
-        isMasking = false;
-      }
-
-      if (childView.visible) {
-        childView.render();
-      }
-
-      if (childView.hasClip) {
-        skCanvas.save();
-        childView.tryClip();
-        isMasking = true;
-      }
-    }
-
-    if (isMasking) {
-      skCanvas.restore();
     }
   }
 

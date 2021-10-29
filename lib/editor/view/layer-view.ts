@@ -16,26 +16,23 @@ import sk, { SkImageFilter } from '../util/canvaskit';
 import { CacheGetter } from '../util/misc';
 
 export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> extends SkyBaseView {
-  children!: SkyBaseLayerView[];
   layerUpdateId = 100;
 
   parent?: SkyBaseLayerView;
+  children!: SkyBaseLayerView[];
   transform = new Transform();
 
-  protected selected = false;
-
-  // 是否需要 layer 上应用 shadow。
-  // path 之类的 shadow 之类的 shadow 是在绘制的时候设置的
+  /**
+   * 是否需要 layer 上应用 shadow。
+   * path 之类的 shadow 之类的 shadow 是在绘制的时候设置的
+   * 目前来看，group 和 symbol 需要
+   */
   requireLayerDropShadow = false;
-  // savedLayer = false;
 
   // undefined 表示还未初始化，null 表示不需要
   layerPaint: SkPaint | null | undefined;
 
   protected _transformDirty = true;
-
-  // visible = true;
-  // clip = false;
 
   // 有 frame 也方便 debug
   constructor(public model: T) {
@@ -50,11 +47,15 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     return this.model.isVisible;
   }
 
-  get hasClip() {
+  /**
+   * 当前 layer 是否当作蒙版
+   * Mask 作用在 siblings 之间
+   */
+  get isMask() {
     return this.model.hasClippingMask;
   }
 
-  get breakClipChain() {
+  get shouldBreakMaskChain() {
     return this.model.shouldBreakMaskChain;
   }
 
@@ -88,6 +89,36 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     });
   }
 
+  protected renderChildren() {
+    // siblings 中是否已经有一个 mask 正在被应用
+    let isMasking = false;
+
+    const { skCanvas } = this.ctx;
+
+    for (let i = 0; i < this.children.length; i++) {
+      const childView = this.children[i];
+
+      if ((childView.isMask || childView.shouldBreakMaskChain) && isMasking) {
+        skCanvas.restore();
+        isMasking = false;
+      }
+
+      if (childView.visible) {
+        childView.render();
+      }
+
+      if (childView.isMask) {
+        skCanvas.save();
+        childView.tryClip();
+        isMasking = true;
+      }
+    }
+
+    if (isMasking) {
+      skCanvas.restore();
+    }
+  }
+
   /**
    * 关于 transform：
    * pivot 表示的是以哪里作为 scale/rotate的中心。 position 表示了 pivot 这个点在父坐标系中的位置。
@@ -100,7 +131,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
    * sketch 中 pivot 默认是 frame 中心。
    * position 也很好计算，scale、rotate 都没有改变它，还是 frame 中心。
    *
-   * 之前直接使用 canvas 上的 translate、rotate 方法，实际上是多个 matrix 相乘
+   * 之前直接使用 canvas 上的 translate、 rotate 方法，实际上是多个 matrix 相乘
    * 现在则是一次生成 matrix，有许多地方要注意。
    *
    * 有一点没搞明白：
@@ -133,23 +164,16 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
    * 计算 scale 和 offset
    * 不同类型的 layer 有不同的 scale 方式，但 scale/offset 值计算方式是一样的。
    *
-   *
-   * Todo
-   * 这个方法应该分成两步，
+   * 这个逻辑应该分成两步，
    * 1 先计算 scale
    * 2 scale 改变 frame，用新的 frame 计算 offset。
    *
+   * 现在这个方法只计算 scale
    */
   calcInstanceChildScale() {
-    // const symbolCtx = this.ctx.symbolContext;
-    // // 不再任何 instance 内，直接返回
-    // if (!symbolCtx) return;
-
     const parent = this.parent;
 
-    // 目前就只在 master 上用了，所以对 instance layout 影响不大
-    if (!(parent instanceof SkyBaseLayerView)) return;
-    if (!parent.isFrameScaled) return;
+    if (!parent?.isFrameScaled) return;
 
     const instanceFrame = parent.frame;
     const masterFrame = parent.intrinsicFrame;
@@ -172,31 +196,16 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
       // 对齐左侧，无需 offset
     } else if (this.model.snapRight) {
       const oldRight = masterFrame.width - curFrame.width - curFrame.x;
-
       // mojoscale
       if (!this.model.fixedWidth) {
         scaleX = (masterFrame.width * instanceScaleX - oldRight) / (masterFrame.width - oldRight);
       }
-
-      // 对齐右侧的时候需要计算 offset
-
-      // const newLeft = instanceFrame.width - curFrame.width * scaleX - oldRight;
-      // offsetX = newLeft - curFrame.x;
     } else if (this.model.snapLeft) {
       // 对齐左侧无需 offset
-
       // mojoscale
       if (!this.model.fixedWidth) {
         scaleX = (masterFrame.width * instanceScaleX - curFrame.x) / (masterFrame.width - curFrame.x);
       }
-    } else {
-      // 既没有对齐左侧，也没有对齐右侧
-      // 保持中心位置不变
-      // const oldCenter = curFrame.x + curFrame.width / 2;
-      // const oldCenterRatio = oldCenter / masterFrame.width;
-      // const newCenter = oldCenterRatio * instanceFrame.width;
-      // const newLeft = newCenter - (scaleX * curFrame.width) / 2;
-      // offsetX = newLeft - curFrame.x;
     }
 
     // 上下 snap， 拉伸
@@ -214,26 +223,11 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
       if (!this.model.fixedHeight) {
         scaleY = (masterFrame.height * instanceScaleY - oldBottom) / (masterFrame.height - oldBottom);
       }
-
-      // 对齐底部的时候需要计算 offset
-
-      // const newTop = instanceFrame.height - curFrame.height * scaleY - oldBottom;
-      // offsetY = newTop - curFrame.y;
     } else if (this.model.snapTop) {
-      // 对齐左侧无需 offset
-
       // mojoscale
       if (!this.model.fixedHeight) {
         scaleY = (masterFrame.height * instanceScaleY - curFrame.y) / (masterFrame.height - curFrame.y);
       }
-    } else {
-      // 既没有对齐左侧，也没有对齐右侧
-      // 保持中心位置不变
-      // const oldCenter = curFrame.y + curFrame.height / 2;
-      // const oldCenterRatio = oldCenter / masterFrame.height;
-      // const newCenter = oldCenterRatio * instanceFrame.height;
-      // const newTop = newCenter - (scaleY * curFrame.height) / 2;
-      // offsetY = newTop - curFrame.y;
     }
 
     return {
@@ -266,10 +260,6 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
       newX = newLeft;
     } else if (this.model.snapLeft) {
       // 对齐左侧无需 offset
-      // mojoscale
-      // if (!this.model.fixedWidth) {
-      //   scaleX = (masterFrame.width * instanceScaleX - intrinsicFrame.x) / (masterFrame.width - intrinsicFrame.x);
-      // }
     } else {
       // 既没有对齐左侧，也没有对齐右侧
       // 保持中心位置不变
@@ -314,7 +304,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   /**
-   * 对于 Group 和 instance 都使用这种方式， 但继承的基类不同。所以抽离一个方法
+   * 对于 Group 和 instance 都使用这种方式， 但继承的基类不同。所以抽离出一个方法。
    */
   commonLayoutSelf() {
     this.scaledFrame = undefined;
@@ -346,27 +336,9 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
   protected scaledFrame?: Rect;
 
-  // 这里两个 frame 的名字很有迷惑性
-
-  // frame 应该是什么样的呢？
-
-  // 一个是 用户设置的 frame / 原始 instance 上的
-  // originFrame
-
-  // 一个是 实际显示的 frame
-  // showFrame
-
-  // 还有个是 children 参考的 frame，大多数情况下，等同于 model.frame
-  // frameForChildren
-
-  // 大部分情况下
-  // model.frame === originFrame === showFrame === frameForChildren
-
-  // 在被 instance layout 后， originFrame 不再等于 showFrame
-
-  // 一般来说， frameForChildren
-
-  // 实际展示的 frame， 在 被 instance 缩放时会不一样
+  /**
+   * 实际展示的 frame， 在被 instance 缩放时会跟 model 上的不一样。
+   */
   get frame() {
     return this.scaledFrame || this.model.frame;
   }
@@ -376,7 +348,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   /**
-   * 在 parent 坐标系中的一个 rect 区域，表示当前 layer 的绘制范围。
+   * 在 parent 坐标系中的一个矩形区域，表示当前 layer 的绘制范围。
    * 因为 frame 表示的是未经过旋转和拉伸的。 所以这里 bounds 跟 frame 可能不同。
    *
    * frame 本身已经是内部区域的最小闭包矩形了，范围大于内部实际绘制内容。再经过一次变换后。
@@ -424,24 +396,8 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
   protected applyTransform() {
     const { skCanvas } = this.ctx;
-    // skCanvas.getLocalToDevice
     const arr = this.transform.localTransform.toArray(false);
     skCanvas.concat(arr);
-    // console.log('>>>>', this.id, arr);
-    // const frame = this.model.frame;
-
-    // // translate
-    // skCanvas.translate(frame.x, frame.y);
-
-    // // Flip
-    // skCanvas.scale(this.model.isFlippedHorizontal ? -1 : 1, this.model.isFlippedVertical ? -1 : 1);
-    // skCanvas.translate(
-    //   this.model.isFlippedHorizontal ? -frame.width : 0,
-    //   -this.model.isFlippedVertical ? -frame.height : 0
-    // );
-
-    // Rotation
-    // skCanvas.rotate(-this.model.rotation, frame.width / 2, frame.height / 2);
   }
 
   canQuickReject = true;
@@ -480,7 +436,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   tryClip() {
-    if (!this.hasClip) return;
+    if (!this.isMask) return;
 
     // 可能 render 没有被调用，所以本地 transform 要在这里更新
     // 但是吧，这个逻辑放在这里也不是很好，应该放在 layout 中的
@@ -488,15 +444,13 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
       this.updateTransform();
     }
 
-    // 需要手动进行坐标转换，并回退
+    // save and restore 会将 clip 也撤回
+    // 所以需要手动进行坐标转换，并回退
     const { skCanvas } = this.ctx;
-    // const current = skCanvas.getTotalMatrix();
-    // skCanvas.concat()
 
     const mat = this.transform.localTransform.toArray(false);
     skCanvas.concat(mat);
     this._tryClip();
-    // const invertMat = this.transform.localTransform.clone().invert().toArray(false);
     skCanvas.concat(sk.CanvasKit.Matrix.invert(mat)!);
   }
 
@@ -619,12 +573,12 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   select() {
-    this.selected = true;
-    this.ctx.markDirty();
+    // this.selected = true;
+    // this.ctx.markDirty();
   }
 
   unselect() {
-    this.selected = false;
-    this.ctx.markDirty();
+    // this.selected = false;
+    // this.ctx.markDirty();
   }
 }
