@@ -1,10 +1,10 @@
-import sk, { defaultFonts } from '../util/canvaskit';
+import sk, { defaultFonts } from '../../util/canvaskit';
 
 // import { SkyLayerView, SkCanvas } from './base';
-import { SkyBoxView } from './base';
-import { Point } from '../base/point';
-import { SkParagraphStyle, SkPaint } from '../model';
-import { Rect } from '../base/rect';
+import { SkyBoxView } from './box-view';
+import { Point } from '../../base/point';
+import { SkParagraphStyle, SkPaint } from '../../model';
+import { Rect } from '../../base/rect';
 
 const DebugHideRuler = false;
 

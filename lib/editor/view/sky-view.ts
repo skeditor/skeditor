@@ -1,5 +1,6 @@
-import { Disposable, Rect } from '../base';
 import { SkyModel } from '../model';
+import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView } from '.';
+import { Disposable, Rect } from '../base';
 import sk, {
   CanvaskitPromised,
   getFontMgr,
@@ -13,7 +14,6 @@ import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageContainerView } from '.';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -23,7 +23,7 @@ export class SkyView extends Disposable {
 
   canvasEl!: HTMLCanvasElement;
   grContext!: SkGrDirectContext;
-  rootView?: SkyPageContainerView;
+  rootView?: SkyPageView;
 
   skSurface!: SkSurface;
   skCanvas!: SkCanvas;
@@ -136,7 +136,6 @@ export class SkyView extends Disposable {
     this.canvasEl.height = canvasHeight;
 
     this.markDirty();
-    this.rootView?.markLayoutDirty();
   }
 
   /**
@@ -169,12 +168,12 @@ export class SkyView extends Disposable {
 
     invariant(!!skyPage, `Page not exist: [${i}]`);
 
-    const skyPageView = new SkyPageContainerView(skyPage);
+    const skyPageView = new SkyPageView(skyPage);
 
     this.rootView = skyPageView;
     this.rootView.layout();
 
-    skyPageView.showFullContent();
+    skyPageView.zoomToFit();
 
     if (DebugPrintTree) {
       this.debugPrintTree(this.rootView);

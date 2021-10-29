@@ -13,11 +13,6 @@ export class SkyBitmapView extends SkyBaseLayerView<SkyBitmap> {
     if (!skImg) return;
 
     const { skCanvas } = this.ctx;
-    // const skImg = sk.CanvasKit.MakeImageFromEncoded(image);
-    // if (!skImg) {
-    //   console.warn('Make sk img failed');
-    //   return;
-    // }
 
     const paint = new sk.CanvasKit.Paint();
 

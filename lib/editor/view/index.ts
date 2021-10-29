@@ -4,7 +4,7 @@ import debug from 'debug';
 debug.log = console.log;
 
 export * from './sky-view';
-export * from './base';
+export * from './base-view';
 export * from './layer-view';
 export * from './shape-view';
 export * from './image-view';
