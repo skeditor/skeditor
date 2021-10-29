@@ -29,7 +29,7 @@ export class PointerController extends Disposable {
    * @param pt
    */
   findView(pt: Point): SkyBaseView | undefined {
-    const pageView = this.view.rootView;
+    const pageView = this.view.pageView;
     if (!pageView) return;
     const targetView = pageView.findView(pt);
 

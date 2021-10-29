@@ -14,6 +14,7 @@ import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { OverlayView } from '.';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -23,7 +24,8 @@ export class SkyView extends Disposable {
 
   canvasEl!: HTMLCanvasElement;
   grContext!: SkGrDirectContext;
-  rootView?: SkyPageView;
+  pageView?: SkyPageView;
+  overlayView: OverlayView;
 
   skSurface!: SkSurface;
   skCanvas!: SkCanvas;
@@ -56,16 +58,18 @@ export class SkyView extends Disposable {
 
     const skyView = new SkyView(model, foreignEl);
     skyView.fontMgr = fontMgr;
-    SkyView.currentContext = skyView;
     return skyView;
   }
 
   private constructor(private model: SkyModel, private foreignEl: HTMLElement) {
     super();
+    SkyView.currentContext = this;
 
     this.createCanvasEl();
 
     this.attachParentNode(foreignEl);
+
+    this.overlayView = new OverlayView(this);
 
     this._disposables.push(
       model.changed$.subscribe(() => {
@@ -170,13 +174,13 @@ export class SkyView extends Disposable {
 
     const skyPageView = new SkyPageView(skyPage);
 
-    this.rootView = skyPageView;
-    this.rootView.layout();
+    this.pageView = skyPageView;
+    this.pageView.layout();
 
     skyPageView.zoomToFit();
 
     if (DebugPrintTree) {
-      this.debugPrintTree(this.rootView);
+      this.debugPrintTree(this.pageView);
     }
     this.markDirty();
   }
@@ -189,14 +193,6 @@ export class SkyView extends Disposable {
 
   markDirty() {
     this.dirty = true;
-  }
-
-  visibleLayers() {
-    //
-  }
-
-  get zoomState() {
-    return this.rootView!.zoomState;
   }
 
   // 设置为当前使用的 canvas
@@ -237,12 +233,14 @@ export class SkyView extends Disposable {
 
     this.createSkSurfaceAndCanvas();
     this.skCanvas.clear(sk.CanvasKit.TRANSPARENT);
-    if (this.rootView) {
+    if (this.pageView) {
       const start = Date.now();
       this.skCanvas.save();
       this.skCanvas.scale(this.dpi, this.dpi);
-      this.rootView.layout();
-      this.rootView.render();
+      this.pageView.layout();
+      this.overlayView.layout();
+      this.pageView.render();
+      this.overlayView.render();
       this.skCanvas.restore();
       this.skSurface.flush();
       if (DebugRenderCost) {

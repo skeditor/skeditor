@@ -12,6 +12,7 @@ import type {
   GrDirectContext as SkGrDirectContext,
   Paragraph as SkParagraph,
   TextShadow as SkTextShadow,
+  ParagraphStyle as SkParagraphStyle,
 } from 'canvaskit-wasm';
 
 // import * as CanvasKitInitFn from 'canvaskit-wasm';
@@ -100,4 +101,5 @@ export {
   SkSurface,
   SkParagraph,
   SkTextShadow,
+  SkParagraphStyle,
 };

@@ -13,15 +13,8 @@ export class ZoomState implements IZoomListener {
 
   changed$: Observable<any>;
 
-  /**
-   *
-   * @param offset page 下ruler标尺的偏移。 这样设置，可以让 ruler （0，0）刚好出现在左上角。
-   */
-  constructor(public offset: Point = new Point()) {
+  constructor() {
     this.changed$ = merge(this._position$, this._scale$);
-    const pt = this._position$.value;
-    pt.x = offset.x;
-    pt.y = offset.y;
   }
 
   get position() {

@@ -1,10 +1,7 @@
-import sk, { defaultFonts } from '../../util/canvaskit';
-
-// import { SkyLayerView, SkCanvas } from './base';
+import sk, { defaultFonts, SkPaint, SkParagraphStyle } from '../../util/canvaskit';
 import { SkyBoxView } from './box-view';
-import { Point } from '../../base/point';
-import { SkParagraphStyle, SkPaint } from '../../model';
-import { Rect } from '../../base/rect';
+import { Point, Rect } from '../../base';
+import { ZoomState } from '../../controller/zoom-state';
 
 const DebugHideRuler = false;
 
@@ -33,8 +30,8 @@ export class Ruler extends SkyBoxView {
     return pt;
   }
 
-  constructor(frame: Rect, private isTop: boolean) {
-    super(frame);
+  constructor(private isTop: boolean) {
+    super();
 
     this._paraStyle = new sk.CanvasKit.ParagraphStyle({
       textStyle: {
@@ -43,6 +40,7 @@ export class Ruler extends SkyBoxView {
         fontSize: 10,
       },
     });
+    this.backgroundColor = sk.CanvasKit.WHITE;
   }
 
   createPara(text: string) {
@@ -66,28 +64,20 @@ export class Ruler extends SkyBoxView {
     return getLinePaint();
   }
 
-  /**
-   * xBase, yBase
-   * 标尺的偏移
-   * 1 对应 page 下的 ruler base。
-   * 2 在选中了 art board 的时候，转换到局部坐标系。
-   */
-  get xBase() {
-    return this.ctx.zoomState.offset.x;
-    // return 0;
-  }
-
-  get yBase() {
-    return this.ctx.zoomState.offset.y;
-    // return 0;
-  }
-
   containsPoint() {
     return false;
   }
 
   renderSelf() {
     if (DebugHideRuler) return;
+
+    // 有 pageView 才可以渲染 ruler
+    const pageView = this.ctx.pageView;
+    if (!pageView) return;
+    const axisOffset = pageView.model.axisOffset;
+    // const axisOffset
+    const zoomState = pageView.zoomState;
+
     const { width, height } = this.ctx.frame;
     const { skCanvas } = this.ctx;
 
@@ -97,25 +87,23 @@ export class Ruler extends SkyBoxView {
     if (this.isTop) {
       //   skCanvas.drawRect(sk.CanvasKit.XYWHRect(0, 0, width, RulerThickness), this.bgPaint);
       skCanvas.drawLine(0, RulerThickness, width, RulerThickness, this.linePaint);
-      this.drawGroovesTop();
+      this.drawGroovesTop(zoomState, axisOffset);
     } else {
       //   skCanvas.drawRect(sk.CanvasKit.XYWHRect(0, 0, RulerThickness, height), this.bgPaint);
       skCanvas.drawLine(RulerThickness, 0, RulerThickness, height, this.linePaint);
-      this.drawGroovesLeft();
+      this.drawGroovesLeft(zoomState, axisOffset);
     }
     skCanvas.restore();
   }
 
-  drawGroovesTop() {
-    if (!this.ctx.zoomState) return;
-
+  drawGroovesTop(zoomState: ZoomState, axisOffset: Point) {
     const { skCanvas } = this.ctx;
     const width = this.frame.width;
 
-    const scale = this.ctx.zoomState.scale;
+    const scale = zoomState.scale;
 
     // 水平偏移量，正数表示向右
-    const offsetX = this.ctx.zoomState.position.x - this.xBase * scale;
+    const offsetX = zoomState.position.x + axisOffset.x * scale - RulerThickness;
 
     const representWidth = calcStep(scale);
     const actualWidth = representWidth * scale;
@@ -154,14 +142,14 @@ export class Ruler extends SkyBoxView {
     }
   }
 
-  drawGroovesLeft() {
+  drawGroovesLeft(zoomState: ZoomState, axisOffset: Point) {
     const { skCanvas } = this.ctx;
     const height = this.frame.height;
 
-    const scale = this.ctx.zoomState.scale;
+    const scale = zoomState.scale;
 
     // 水平偏移量，正数表示向下
-    const offsetY = this.ctx.zoomState.position.y - this.yBase * scale;
+    const offsetY = zoomState.position.y + axisOffset.y * scale - RulerThickness;
 
     const representWidth = calcStep(scale);
     const actualWidth = representWidth * scale;
