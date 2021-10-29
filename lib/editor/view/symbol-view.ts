@@ -1,6 +1,5 @@
 import { SkySymbolInstance, SkySymbolMaster } from '../model';
-import { SkyBaseLayerView } from './';
-import { SkyArtboardView } from './artboard-view';
+import { SkyBaseLayerView, SkyArtboardView } from './';
 import { CacheGetter } from '../util/misc';
 
 export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {

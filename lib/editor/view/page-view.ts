@@ -2,13 +2,10 @@ import { ZoomController } from '../controller/zoom-controller';
 import debug from 'debug';
 import { ZoomState } from '../controller/zoom-state';
 import { Ruler, RulerThickness, getLinePaint } from './ruler';
-import { SkyView } from './sky-view';
-import { SkyPage, ClassValue, SkyBaseLayer, SkyBaseGroup, SkPaint } from '../model';
-import { Rect } from '../base/rect';
-import { SkyBaseGroupView, SkyGroupView, SkCanvas, SkyBoxView, SkyBaseView } from './base';
-import sk, { newStrokePaint } from '../util/canvaskit';
-import type { SkPicture } from 'canvaskit-wasm';
-// import { CheckerBoard } from '../tile/checkerboard';
+import { SkyPage } from '../model';
+import { Rect } from '../base';
+import { SkyBaseGroupView, SkyBoxView } from './';
+import sk, { newStrokePaint, SkPicture } from '../util/canvaskit';
 import { TileManager } from '../tile/tile-manager';
 
 const DebugDrawBounds = false;

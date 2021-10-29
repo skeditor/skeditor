@@ -1,7 +1,6 @@
 import sk from '../util/canvaskit';
 import { SkyArtboard, SkyShadow, SkySymbolMaster } from '../model';
-import { SkyBaseLayerView, SkyBoxView } from './';
-import { SkySimpleTextView, SkyTextView } from './text-view';
+import { SkyBaseLayerView, SkyBoxView, SkySimpleTextView } from './';
 
 export class SkyArtboardView extends SkyBaseLayerView<SkyArtboard | SkySymbolMaster> {
   box: SkyBoxView;

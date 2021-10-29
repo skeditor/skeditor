@@ -1,17 +1,19 @@
-import { Disposable } from '../base/disposable';
+import { Disposable, Rect } from '../base';
 import { SkyModel } from '../model';
-import sk, { CanvaskitPromised, getFontMgr } from '../util/canvaskit';
-import { GrDirectContext } from 'canvaskit-wasm';
-import { animationFrameScheduler } from 'rxjs';
-import type { FontMgr, Surface as SkSurface, Canvas as SkCanvas } from 'canvaskit-wasm';
-import { SkyPageContainerView } from './page-view';
-import { Rect } from '../base/rect';
+import sk, {
+  CanvaskitPromised,
+  getFontMgr,
+  SkGrDirectContext,
+  SkCanvas,
+  SkSurface,
+  SkFontMgr,
+} from '../util/canvaskit';
+
 import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
-import { SkySymbolInstanceView } from './symbol-view';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { SkyBaseLayerView } from '.';
+import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageContainerView } from '.';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -20,12 +22,12 @@ export class SkyView extends Disposable {
   static currentContext: SkyView;
 
   canvasEl!: HTMLCanvasElement;
-  grContext!: GrDirectContext;
+  grContext!: SkGrDirectContext;
   rootView?: SkyPageContainerView;
 
   skSurface!: SkSurface;
   skCanvas!: SkCanvas;
-  fontMgr!: FontMgr;
+  fontMgr!: SkFontMgr;
 
   private dirty = true;
 
@@ -84,6 +86,7 @@ export class SkyView extends Disposable {
   }
 
   private attachParentNode(el: HTMLElement) {
+    invariant(!this.canvasEl.parentElement, 'Should not attach again!');
     el.appendChild(this.canvasEl);
     this.doResize();
 
@@ -103,14 +106,13 @@ export class SkyView extends Disposable {
         })
     );
 
-    // 定时渲染
-    this._disposables.push(
-      animationFrameScheduler.schedule(function () {
-        if (view._disposed) return;
-        view.render();
-        this.schedule();
-      }, 0)
-    );
+    const handler = () => {
+      if (view._disposed) return;
+      view.render();
+      // interesting. 相对于 requestAnimationFrame, setTimeout cpu 消耗更少
+      setTimeout(handler, 16);
+    };
+    setTimeout(handler, 16);
   }
 
   // canvasEl 保持和 parentNode 一样大

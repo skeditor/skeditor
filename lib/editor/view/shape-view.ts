@@ -1,4 +1,4 @@
-import { SkyBaseLayerView } from '.';
+import { SkyBaseLayerView, SkyTextView } from '.';
 import {
   SkyShapeGroup,
   SkyBaseShapeLike,
@@ -12,13 +12,10 @@ import {
   SkyGradient,
   SkyPatternFillType,
 } from '../model';
-import type { Canvas as SkCanvas, Path as SkPath, Shader as SkShader, Paint as SkPaint } from 'canvaskit-wasm';
-import { createPath } from '../util/path';
-import sk from '../util/canvaskit';
-import { Rect } from '../base/rect';
+import { Rect, degreeToRadian } from '../base';
+import sk, { SkCanvas, SkPath, SkShader, SkPaint } from '../util/canvaskit';
 import { convertRadiusToSigma } from '../util/sketch-to-skia';
-import { degreeToRadian } from '../base/common';
-import { SkyTextView } from './text-view';
+import { createPath } from '../util/path';
 import { CacheGetter } from '../util/misc';
 
 /**

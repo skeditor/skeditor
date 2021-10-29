@@ -8,10 +8,9 @@ import {
   SkPaint,
   SkyStringAttribute,
 } from '../model';
-import sk, { defaultFonts, newStrokePaint, newColorPaint } from '../util/canvaskit';
 import { SkyBaseLayerView, SkyBoxView, PathPainter } from './';
-import type { Canvas as SkCanvas, Paragraph as SkParagraph, Paragraph, TextShadow } from 'canvaskit-wasm';
-import { Rect } from '../base/rect';
+import { Rect } from '../base';
+import sk, { defaultFonts, newStrokePaint, newColorPaint, SkParagraph, SkTextShadow } from '../util/canvaskit';
 
 export class SkyTextView extends SkyBaseLayerView<SkyText> {
   _painter?: TextPainter;
@@ -101,9 +100,9 @@ export class SkySimpleTextView extends SkyBoxView {
   }
 }
 
-type ParaPaintInfo = { baseY: number; paraArr: [Paragraph, number][] };
+type ParaPaintInfo = { baseY: number; paraArr: [SkParagraph, number][] };
 class TextPainter {
-  private textShadows?: TextShadow[];
+  private textShadows?: SkTextShadow[];
 
   private textPaint?: SkPaint;
   private textBorderPaint?: SkPaint;
@@ -120,7 +119,7 @@ class TextPainter {
         color: shadow.color.skColor,
         blurRadius: shadow.blurRadius,
         offset: [shadow.offsetX, shadow.offsetY],
-      } as TextShadow;
+      } as SkTextShadow;
     });
   }
 

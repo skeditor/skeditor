@@ -1,24 +1,10 @@
-import { CanvaskitPromised } from './canvaskit';
-import type {
-  CanvasKit as CanvasKitType,
-  Path as SkPath,
-  Canvas,
-  Shader,
-  BlendMode,
-  FontMgr,
-  StrokeCap,
-  StrokeJoin,
-} from 'canvaskit-wasm';
+import sk, { CanvaskitPromised } from './canvaskit';
+import type { CanvasKit as CanvasKitType, BlendMode, StrokeCap, StrokeJoin } from 'canvaskit-wasm';
 import SketchFormat from '@sketch-hq/sketch-file-format-ts';
-// import { Rect } from './rect';
-// import { Point } from './point';
-// import { ShapeGroupChildrenTypes } from './types';
-import invariant from 'ts-invariant';
 
 let CanvasKit: CanvasKitType;
-CanvaskitPromised.then((kit) => {
-  CanvasKit = kit;
-  window['CanvasKit'] = CanvasKit;
+CanvaskitPromised.then(() => {
+  CanvasKit = sk.CanvasKit;
 });
 
 export function sketchBlendToSk(mode: SketchFormat.BlendMode): BlendMode {

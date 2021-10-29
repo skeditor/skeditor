@@ -1,4 +1,19 @@
 import type { CanvasKitInit, CanvasKit, FontMgr, InputColor } from 'canvaskit-wasm';
+import type {
+  Canvas as SkCanvas,
+  Path as SkPath,
+  Color as SkColor,
+  ImageFilter as SkImageFilter,
+  SkPicture,
+  Shader as SkShader,
+  Paint as SkPaint,
+  Surface as SkSurface,
+  FontMgr as SkFontMgr,
+  GrDirectContext as SkGrDirectContext,
+  Paragraph as SkParagraph,
+  TextShadow as SkTextShadow,
+} from 'canvaskit-wasm';
+
 // import * as CanvasKitInitFn from 'canvaskit-wasm';
 // import canvaskitWasm from '!!file-loader!canvaskit-wasm/bin/canvaskit.wasm';
 
@@ -71,3 +86,18 @@ export function newStrokePaint(width?: number, color?: InputColor) {
 }
 
 export default sk;
+
+export {
+  SkCanvas,
+  SkPath,
+  SkColor,
+  SkImageFilter,
+  SkPicture,
+  SkPaint,
+  SkShader,
+  SkGrDirectContext,
+  SkFontMgr,
+  SkSurface,
+  SkParagraph,
+  SkTextShadow,
+};
