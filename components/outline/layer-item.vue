@@ -1,5 +1,5 @@
 <template>
-  <div class="layer-item" @click="emit('select')">
+  <div class="layer-item" :class="selected && 'selected'" @click="emit('select', layer)">
     <div :style="spacingStyle"></div>
     <img
       v-if="isGroup"
@@ -18,11 +18,14 @@ import { computed } from 'vue';
 import { SkyBaseGroup, SkyBaseLayer } from '~/lib/editor/model';
 import LayerIcon from './layer-icon.vue';
 
-const props = defineProps<{ layer: SkyBaseLayer }>();
+const props = defineProps<{
+  selected: boolean;
+  layer: SkyBaseLayer;
+}>();
 
 const emit = defineEmits<{
   (event: 'toggle', layer: SkyBaseGroup): void;
-  (event: 'select'): void;
+  (event: 'select', layer: SkyBaseLayer): void;
 }>();
 
 // 都必须从 props 上获取，因为 layer 可能传入新的
@@ -41,6 +44,10 @@ const spacingStyle = computed(() => ({
   display: flex;
   align-items: center;
   cursor: default;
+}
+.layer-item.selected {
+  background-color: #7fa7c3;
+  border-radius: 4px;
 }
 
 .collapse-icon {

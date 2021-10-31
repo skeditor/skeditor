@@ -2,10 +2,9 @@ import sk, { defaultFonts, SkPaint, SkParagraphStyle } from '../../util/canvaski
 import { SkyBoxView } from './box-view';
 import { Point, Rect } from '../../base';
 import { ZoomState } from '../../controller/zoom-state';
+import { RulerThickness } from '../const';
 
 const DebugHideRuler = false;
-
-export const RulerThickness = 25;
 
 const RulerTextMarginLeft = 3;
 const RulerTextMarginTop = 3;

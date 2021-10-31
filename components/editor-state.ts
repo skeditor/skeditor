@@ -28,6 +28,8 @@ export class EditorState {
     return ret;
   });
 
+  selectedLayerIdRef = ref('');
+
   get pages() {
     return this.pagesRef.value;
   }
@@ -50,6 +52,12 @@ export class EditorState {
     }
     this.selectedPageIndex.value = idx;
     this.view?.renderPage(idx);
+  };
+
+  selectLayer = (layer: SkyBaseLayer) => {
+    const objectId = layer.objectId;
+    this.selectedLayerIdRef.value = objectId;
+    this.view?.selectLayer(layer);
   };
 
   private reset() {

@@ -8,7 +8,12 @@
       key-field="objectId"
       v-slot="{ item }"
     >
-      <LayerItem :layer="item" @toggle="onToggleOutlineGroup" />
+      <LayerItem
+        :layer="item"
+        @toggle="onToggleOutlineGroup"
+        @select="selectLayer"
+        :selected="selectedLayerIdRef === (item as SkyBaseLayer).objectId"
+      />
     </RecycleScroller>
   </div>
 </template>
@@ -18,12 +23,13 @@ import { RecycleScroller } from 'vue-virtual-scroller';
 import { userPerfectScrollbar } from '~/components/ui/scrollbar-composable';
 import { useEditor } from '~/components/editor-state';
 import LayerItem from './layer-item.vue';
+import { SkyBaseLayer } from '~/lib/editor/model';
 
 const scrollerRef = ref();
 const realElRef = computed(() => scrollerRef.value?.$el);
 userPerfectScrollbar(realElRef);
 
-const { outlineListRef, onToggleOutlineGroup, selectedPageIndex } = useEditor();
+const { outlineListRef, onToggleOutlineGroup, selectedPageIndex, selectLayer, selectedLayerIdRef } = useEditor();
 
 watch(selectedPageIndex, () => {
   if (realElRef.value) {

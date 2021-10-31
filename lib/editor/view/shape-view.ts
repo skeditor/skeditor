@@ -156,7 +156,6 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
     if (this._appliedSymbolScale) {
       this.transform.position.set(this.scaleOffsetX, this.scaleOffsetY);
       this.transform.updateLocalTransform();
-      this._transformDirty = false;
     } else {
       super.updateTransform();
     }

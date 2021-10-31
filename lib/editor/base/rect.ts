@@ -1,6 +1,7 @@
 import { Point } from './point';
 import SketchFormat from '@sketch-hq/sketch-file-format-ts';
 import sk from '../util/canvaskit';
+import { Matrix } from '.';
 
 export class Rect {
   constructor(public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0) {}
@@ -146,5 +147,18 @@ export class Rect {
       translate,
       scale,
     };
+  }
+
+  toPoints() {
+    return [
+      this.leftTop,
+      new Point(this.x + this.width, this.y),
+      new Point(this.x + this.width, this.height + this.y),
+      new Point(this.x, this.y + this.height),
+    ];
+  }
+
+  applyMatrix(matrix: Matrix) {
+    return Rect.fromPoints(this.toPoints().map((pt) => matrix.apply(pt, pt)));
   }
 }

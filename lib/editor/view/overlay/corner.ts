@@ -1,7 +1,8 @@
 import { Rect } from '../../base';
 import sk from '../../util/canvaskit';
+import { RulerThickness } from '../const';
 import { SkyBoxView } from './box-view';
-import { getLinePaint, RulerThickness } from './ruler';
+import { getLinePaint } from './ruler';
 
 export class CornerView extends SkyBoxView {
   constructor() {

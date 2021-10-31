@@ -156,7 +156,6 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
     this.transform.position.set(frame.x + frame.width / 2, frame.y + frame.height / 2);
     this.transform.updateLocalTransform();
-    this._transformDirty = false;
   }
 
   /**
@@ -403,14 +402,23 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   canQuickReject = true;
 
   layout() {
-    super.layout();
+    if (this._layoutDirty) {
+      this.layoutSelf();
+      this._layoutDirty = false;
+    }
 
     // 在 layout 的时候更新下 transform，不然 bounds 算不对。
     // 应该放在 super.layout 之后，因为 layout 中会计算 instance 造成的缩放和偏移
     // 这个地方后面可能还会遇到坑
+
+    // 这里现在又放在了 layoutChildren 之前，是为了能够计算 worldTransform
     if (this._transformDirty) {
       this.updateTransform();
+      this._transformDirty = false;
     }
+    this.transform.updateTransform(this.parent?.transform ?? Transform.IDENTITY);
+
+    this.layoutChildren();
   }
 
   // 只给外部调用，不支持继承
@@ -440,12 +448,6 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
   tryClip() {
     if (!this.isMask) return;
-
-    // 可能 render 没有被调用，所以本地 transform 要在这里更新
-    // 但是吧，这个逻辑放在这里也不是很好，应该放在 layout 中的
-    if (this._transformDirty) {
-      this.updateTransform();
-    }
 
     // save and restore 会将 clip 也撤回
     // 所以需要手动进行坐标转换，并回退

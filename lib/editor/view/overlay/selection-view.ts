@@ -5,7 +5,18 @@
  * 确保 stroke-width 固定。
  */
 import { SkyBaseLayerView } from '..';
+import sk, { newStrokePaint } from '../../util/canvaskit';
+import { SkyBoxView } from './box-view';
 
-class SelectionView {
-  constructor(private layerView: SkyBaseLayerView) {}
+export class SelectionView extends SkyBoxView {
+  clip = false;
+  constructor(private layerView: SkyBaseLayerView) {
+    super();
+  }
+
+  renderSelf() {
+    const actualFrame = this.layerView.frame.onlySize.applyMatrix(this.layerView.transform.worldTransform);
+    const { skCanvas } = this.ctx;
+    skCanvas.drawRect(actualFrame.toSk(), newStrokePaint(2, sk.CanvasKit.RED));
+  }
 }

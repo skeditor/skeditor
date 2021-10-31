@@ -42,17 +42,17 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     // todo, add to dispose
     this.controller = new ZoomController(this.ctx.canvasEl, this.zoomState);
 
-    // this.controller.setOffset(this.pageBounds.leftTop);
-
     this.zoomState.changed$.subscribe(() => {
-      const { position, scale } = this.zoomState;
-      // console.log('>>>> update page position', position.x, position.y);
-      this.transform.position.set(position.x, position.y);
-      this.transform.scale.set(scale, scale);
-      this.transform.updateLocalTransform();
-
+      this._transformDirty = true;
       this.ctx.markDirty();
     });
+  }
+
+  updateTransform() {
+    const { position, scale } = this.zoomState;
+    this.transform.position.set(position.x, position.y);
+    this.transform.scale.set(scale, scale);
+    this.transform.updateLocalTransform();
   }
 
   zoomToFit() {

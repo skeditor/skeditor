@@ -1,4 +1,4 @@
-import { SkyModel } from '../model';
+import { SkyBaseLayer, SkyModel } from '../model';
 import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView } from '.';
 import { Disposable, Rect } from '../base';
 import sk, {
@@ -15,6 +15,7 @@ import { PointerController } from '../controller/pointer-controller';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { OverlayView } from '.';
+import { RulerThickness } from './const';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -65,11 +66,11 @@ export class SkyView extends Disposable {
     super();
     SkyView.currentContext = this;
 
+    this.overlayView = new OverlayView();
+
     this.createCanvasEl();
 
     this.attachParentNode(foreignEl);
-
-    this.overlayView = new OverlayView(this);
 
     this._disposables.push(
       model.changed$.subscribe(() => {
@@ -140,6 +141,7 @@ export class SkyView extends Disposable {
     this.canvasEl.height = canvasHeight;
 
     this.markDirty();
+    this.overlayView.markLayoutDirty();
   }
 
   /**
@@ -179,13 +181,15 @@ export class SkyView extends Disposable {
 
     skyPageView.zoomToFit();
 
+    this.overlayView.unselect();
+
     if (DebugPrintTree) {
       this.debugPrintTree(this.pageView);
     }
     this.markDirty();
   }
 
-  private debugPrintTree(node: any) {
+  private debugPrintTree(node: any = this.pageView) {
     console.group(node?.debugString?.());
     node?.children?.forEach((child) => this.debugPrintTree(child));
     console.groupEnd();
@@ -294,5 +298,28 @@ export class SkyView extends Disposable {
 
   getViewByModelId(id: string) {
     return this.viewMap.get(id);
+  }
+
+  selectLayer(layer: SkyBaseLayer) {
+    const view = this.getViewByModelId(layer.objectId);
+    if (view) {
+      this.overlayView.addSelection(view);
+      this.markDirty();
+    }
+  }
+
+  showRuler = true;
+
+  /**
+   * 取决于有没有 ruler 而不同
+   */
+  get pageFrame() {
+    const rulerThickness = this.showRuler ? RulerThickness : 0;
+    return new Rect(
+      rulerThickness,
+      rulerThickness,
+      this.frame.width - rulerThickness,
+      this.frame.height - rulerThickness
+    );
   }
 }
