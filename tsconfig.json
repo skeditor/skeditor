@@ -16,7 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "#app": ["node_modules/nuxt3/dist/app"]
     },
     "types": ["@types/node", "@types/jest"]
   },

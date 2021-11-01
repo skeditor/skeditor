@@ -3,6 +3,8 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 export default defineNuxtConfig({
   ssr: false,
+  target: 'static',
+  modern: true,
   vite: false,
   buildModules: [
     '@nuxtjs/eslint-module',
