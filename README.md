@@ -1,29 +1,7 @@
-# Nuxt 3 Minimal Starter
+# Sketch Editor
 
-We recommend to look at the [documentation](https://v3.nuxtjs.org).
+## Intro
 
-## Setup
-
-Make sure to install the dependencies
-
-```bash
-yarn install
-```
-
-## Development
-
-Start the development server on http://localhost:3000
-
-```bash
-yarn dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-yarn build
-```
-
-Checkout the [deployment documentation](https://v3.nuxtjs.org/docs/deployment).
+This is a online vector graphics editor.  
+It's still under developing.
+For now you can use it to view your sketch design files online.
