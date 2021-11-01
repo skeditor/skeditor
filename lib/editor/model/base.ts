@@ -13,7 +13,7 @@ import type {
   Paragraph as SkParagraph,
   ParagraphStyle as SkParagraphStyle,
 } from 'canvaskit-wasm';
-import invariant, { InvariantError } from 'ts-invariant';
+import invariant from 'ts-invariant';
 
 export const enum ClassValue {
   // GeneralObject = 'GeneralObject',
@@ -107,9 +107,9 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
   parent?: SkyBaseLayer;
 
   frame = new Rect();
-  isFlippedHorizontal: boolean = false;
-  isFlippedVertical: boolean = false;
-  rotation: number = 0;
+  isFlippedHorizontal = false;
+  isFlippedVertical = false;
+  rotation = 0;
 
   style?: SkyStyle;
 
@@ -664,7 +664,7 @@ class SkyBlur extends SkyBaseObject<SketchFormat.Blur> {
   // motion blur 可以设置方向
   motionAngle = 0;
   radius = 0;
-  saturation: number = 1;
+  saturation = 1;
   type: SkyBlurType = SkyBlurType.Gaussian;
 
   fromJson(data: SketchFormat.Blur) {
@@ -702,10 +702,10 @@ export class SkyFill extends SkyTintColorObject<SketchFormat.Fill> {
   isEnabled = true;
 
   fillType = SkyFillType.Color;
-  noiseIndex: number = 0;
-  noiseIntensity: number = 0;
+  noiseIndex = 0;
+  noiseIntensity = 0;
   patternFillType = SkyPatternFillType.Fill;
-  patternTileScale: number = 0;
+  patternTileScale = 0;
   contextSettings = new SkyGraphicsContextSettings();
   _gradient?: SkyGradient;
   image?: SkyFile;
@@ -743,10 +743,10 @@ export class SkyFill extends SkyTintColorObject<SketchFormat.Fill> {
 export class SkyBorder extends SkyTintColorObject<SketchFormat.Border> {
   readonly _class = 'border';
 
-  isEnabled: boolean = true;
+  isEnabled = true;
   fillType: SkyFillType = SkyFillType.Color;
   position: SkyBorderPosition = SkyBorderPosition.Center;
-  thickness: number = 1;
+  thickness = 1;
   _gradient?: SkyGradient;
 
   // contextSettings: GraphicsContextSettings;
@@ -820,7 +820,7 @@ export class SkyImage {}
 export class SkyGraphicsContextSettings extends SkyBaseObject<SketchFormat.GraphicsContextSettings> {
   readonly _class = 'graphicsContextSettings';
   blendMode = sk.CanvasKit.BlendMode.Src;
-  opacity: number = 1;
+  opacity = 1;
 
   fromJson(data: SketchFormat.GraphicsContextSettings) {
     this.blendMode = sketchBlendToSk(data.blendMode);
@@ -840,7 +840,7 @@ export class SkyGradient extends SkyBaseObject<SketchFormat.Gradient> {
   _class = 'gradient';
 
   gradientType: SkyGradientType = SkyGradientType.Linear;
-  elipseLength: number = 100; // todo
+  elipseLength = 100; // todo
   from = new Point();
   to = new Point();
   _stops: SkyGradientStop[] = [];
@@ -921,7 +921,7 @@ export class SkyTextStyle extends SkyBaseObject<SketchFormat.TextStyle> {
 export class SkyBorderOptions extends SkyBaseObject<SketchFormat.BorderOptions> {
   readonly _class = 'borderOptions';
 
-  isEnabled: boolean = false;
+  isEnabled = false;
   dashPattern: number[] = [];
   lineCapStyle = sk.CanvasKit.StrokeCap.Butt;
   lineJoinStyle = sk.CanvasKit.StrokeJoin.Round;
@@ -967,15 +967,3 @@ export class SkyCurvePoint extends SkyBaseObject<SketchFormat.CurvePoint> {
     return this;
   }
 }
-
-// 到底是用 base 的方式，还是所有的 model 都实现？
-// base 最好只用来继承，不然，tagged union 特性都无法使用了。
-// 我是不是有太纠结了，最近两天没有什么进展了。
-
-// 如果我把 base 作为工具类，不直接使用。
-// 其实 base 我最多也就实现下 frame 里的信息喽
-// 实现几个简单的我想要实现的类，并且简单的套一层壳子。
-
-// 这样似乎可行。
-
-// 把所有 base 类，都应该加上 abstract ！！！

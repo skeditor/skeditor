@@ -1,4 +1,4 @@
-import type { CanvasKitInit, CanvasKit, FontMgr, InputColor } from 'canvaskit-wasm';
+import type { CanvasKit, FontMgr, InputColor } from 'canvaskit-wasm';
 import type {
   Canvas as SkCanvas,
   Path as SkPath,

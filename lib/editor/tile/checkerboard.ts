@@ -10,7 +10,7 @@ const DebugShowCheckBoardGridLow = false;
 
 /**
  * 一个 checkerboard 只表示一个分辨率下的内容
- * 大部分的checkerboard 都是 pow 2 scale。 只有一个 ideal scale
+ * 大部分的 checkerboard 都是 pow 2 scale。 只有一个 ideal scale
  */
 export class Checkerboard {
   // pre should have lower scale
@@ -20,8 +20,6 @@ export class Checkerboard {
 
   // 更低分辨率的 checkerboard
   low?: Checkerboard;
-
-  // scale = 1; // should be power of 2
 
   isStair = false;
 
@@ -60,8 +58,6 @@ export class Checkerboard {
 
     const { left, top, right, bottom } = new TileBounds().fromRect(curFillRect);
 
-    // const tiles = [] as [number, number][];
-
     let missTile = false;
 
     const canvas = this.tileManager.canvas;
@@ -78,11 +74,6 @@ export class Checkerboard {
         } else {
           const checkerboard = toLower ? this.low : this.high;
           missTile = !checkerboard || !checkerboard.drawOtherScaleTile(this.scale, x, y);
-
-          // if (!toLower && missTile) {
-          //   canvas.restore();
-          //   return false;
-          // }
 
           if (highPriority) {
             this.tileManager.requireTile(this.scale, x, y, missTile ? Priority.High : Priority.Middle);
@@ -138,16 +129,6 @@ export class Checkerboard {
         canvas.restore();
       }
     }
-
-    // for loop
-    // check hasTile
-    // no? to low priority requirements
-    // yes? just draw it and next iter
-    // check high tiles
-    // check low tiles
-    // no // require it
-    // recursively ask for lower but not require it.
-    // yes // draw it
   }
 
   debugDrawViewportGrids(viewport: Rect, color?: SkColor) {

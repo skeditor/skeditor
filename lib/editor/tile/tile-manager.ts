@@ -1,5 +1,5 @@
 import { Rect } from '../base/rect';
-import { TileBounds, floorBinaryScale, Tile, Priority } from './tile';
+import { TileBounds, Tile, Priority } from './tile';
 import { SkImage } from '../model';
 import { SkyPageView } from '../view/page-view';
 import { CheckerboardPyramid } from './checkerboard-pyramid';
@@ -111,7 +111,7 @@ export class TileManager {
 
     let dirty = 0;
     this.requiredTiles.sort((a, b) => b[3] - a[3]);
-    for (let args of this.requiredTiles) {
+    for (const args of this.requiredTiles) {
       const [scale, x, y] = args;
       const start = Date.now();
 
@@ -190,12 +190,12 @@ export class TileManager {
       height,
     })!;
 
-    var canvas = document.createElement('canvas');
+    const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext('2d')!;
 
-    var imageData = context.createImageData(width, height);
+    const imageData = context.createImageData(width, height);
     imageData.data.set(data);
     context.putImageData(imageData, 0, 0);
 
