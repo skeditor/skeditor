@@ -1,4 +1,4 @@
-import { floorBinaryScale } from '~/lib/sky-editor/tile/tile';
+import { floorBinaryScale } from '../tile/tile';
 import { CacheGetter } from './misc';
 
 describe('util', () => {

@@ -18,11 +18,22 @@
     "vue3-perfect-scrollbar": "^1.5.5"
   },
   "devDependencies": {
+    "@nuxtjs/eslint-module": "^3.0.2",
     "@types/debug": "^4.1.7",
     "@types/jest": "^27.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
     "cors": "^2.8.5",
+    "eslint": "^8.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard-with-typescript": "^21.0.1",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.1",
     "express": "^4.17.1",
-    "nuxt3": "latest",
-    "prettier": "^2.4.1"
+    "fork-ts-checker-webpack-plugin": "^6.4.0",
+    "nuxt3": "^3.0.0-27249044.7d918e1",
+    "prettier": "^2.4.1",
+    "typescript": "^4.4.4"
   }
 }

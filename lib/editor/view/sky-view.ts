@@ -1,5 +1,5 @@
 import { SkyBaseLayer, SkyModel } from '../model';
-import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView } from '.';
+import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView, OverlayView } from '.';
 import { Disposable, Rect } from '../base';
 import sk, {
   CanvaskitPromised,
@@ -14,7 +14,6 @@ import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
 import { Observable } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { OverlayView } from '.';
 import { RulerThickness } from './const';
 
 const DebugPrintTree = false;
@@ -95,8 +94,6 @@ export class SkyView extends Disposable {
     el.appendChild(this.canvasEl);
     this.doResize();
 
-    const view = this;
-
     this._disposables.push(
       new Observable((sub) => {
         const ro = new ResizeObserver((entries) => {
@@ -112,8 +109,8 @@ export class SkyView extends Disposable {
     );
 
     const handler = () => {
-      if (view._disposed) return;
-      view.render();
+      if (this._disposed) return;
+      this.render();
       // interesting. 相对于 requestAnimationFrame, setTimeout cpu 消耗更少
       setTimeout(handler, 16);
     };
@@ -131,8 +128,8 @@ export class SkyView extends Disposable {
     this.frame.height = bounds.height;
     this.dpi = window.devicePixelRatio;
 
-    this.canvasEl.style.width = bounds.width + 'px';
-    this.canvasEl.style.height = bounds.height + 'px';
+    this.canvasEl.style.width = `${bounds.width}px`;
+    this.canvasEl.style.height = `${bounds.height}px`;
 
     const canvasWidth = this.frame.width * this.dpi;
     const canvasHeight = this.frame.height * this.dpi;
@@ -150,13 +147,15 @@ export class SkyView extends Disposable {
    */
   createSkSurfaceAndCanvas() {
     this.skSurface?.delete();
-    this.skSurface = sk.CanvasKit.MakeOnScreenGLSurface(
+    const surface = sk.CanvasKit.MakeOnScreenGLSurface(
       this.grContext,
       this.canvasEl.width,
       this.canvasEl.height,
       sk.CanvasKit.ColorSpace.SRGB
-    )!;
-    invariant(this.skSurface, 'Cant create sk surface');
+    );
+
+    invariant(surface, 'Cant create sk surface');
+    this.skSurface = surface;
     this.skCanvas = this.skSurface.getCanvas();
     invariant(this.skCanvas, 'Cant create sk canvas');
   }
@@ -169,10 +168,10 @@ export class SkyView extends Disposable {
     });
   }
 
-  renderPage(i: number = 0) {
+  renderPage(i = 0) {
     const skyPage = this.model.pages[i];
 
-    invariant(!!skyPage, `Page not exist: [${i}]`);
+    invariant(skyPage !== undefined, `Page not exist: [${i}]`);
 
     const skyPageView = new SkyPageView(skyPage);
 
@@ -267,8 +266,9 @@ export class SkyView extends Disposable {
     const devicePt = sk.CanvasKit.Matrix.mapPoints(currentMatrix, anchor) as [number, number];
     devicePt[0] = devicePt[0] / this.dpi;
     devicePt[1] = devicePt[1] / this.dpi;
-
-    this.skCanvas.concat(sk.CanvasKit.Matrix.invert(currentMatrix)!);
+    const invertedCoord = sk.CanvasKit.Matrix.invert(currentMatrix);
+    invariant(invertedCoord, 'invert matrix failed');
+    this.skCanvas.concat(invertedCoord);
     this.skCanvas.scale(this.dpi, this.dpi);
     fn(devicePt);
     this.skCanvas.restore();
@@ -284,7 +284,7 @@ export class SkyView extends Disposable {
 
   debugTexture() {
     const debugTextures = (window as any).dt;
-    const ctx = (this.canvasEl as any).qf.qe;
+    // const ctx = (this.canvasEl as any).qf.qe;
     if (debugTextures) {
       debugTextures.forEach((t, idx) => {
         // createImageFromTexture(idx, ctx, t, 4096, 4096);

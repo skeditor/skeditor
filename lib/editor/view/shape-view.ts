@@ -284,8 +284,8 @@ export class PathPainter {
     const fills = this.model.style?.fills;
     const borders = this.model.style?.borders;
 
-    const hasFill = fills && fills.some((fill) => fill.isEnabled);
-    const hasBorder = borders && borders.some((border) => border.isEnabled);
+    const hasFill = fills?.some((fill) => fill.isEnabled);
+    const hasBorder = borders?.some((border) => border.isEnabled);
 
     this.hasFill = !!hasFill;
 

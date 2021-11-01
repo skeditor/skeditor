@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TileManager } from './tile-manager';
 import { Rect } from '../base/rect';
 import { CanvaskitPromised } from '../util/canvaskit';

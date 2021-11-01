@@ -1,9 +1,11 @@
 import { defineNuxtConfig } from 'nuxt3';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 export default defineNuxtConfig({
   ssr: false,
   vite: false,
   buildModules: [
+    '@nuxtjs/eslint-module',
     {
       handler: function () {
         this.nuxt.hook('webpack:config', (configs) => {
@@ -20,6 +22,7 @@ export default defineNuxtConfig({
   css: ['~/assets/global.css', 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css'],
   plugins: ['~/plugins/config.client.ts'],
   build: {
+    plugins: [new ForkTsCheckerWebpackPlugin()],
     // extend(config) {
     //   console.log('>>>> got config');
     //   process.exit();

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Rect } from '../../base';
 
 export class SkySimpleTextView extends SkyBoxView {
