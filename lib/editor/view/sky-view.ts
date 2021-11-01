@@ -1,5 +1,5 @@
 import { SkyBaseLayer, SkyModel } from '../model';
-import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView, OverlayView } from '.';
+import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView, OverlayView, SkyArtboardView } from '.';
 import { Disposable, Rect } from '../base';
 import sk, {
   CanvaskitPromised,
@@ -172,15 +172,13 @@ export class SkyView extends Disposable {
     const skyPage = this.model.pages[i];
 
     invariant(skyPage !== undefined, `Page not exist: [${i}]`);
-
+    this.overlayView.resetPage();
     const skyPageView = new SkyPageView(skyPage);
 
     this.pageView = skyPageView;
     this.pageView.layout();
 
     skyPageView.zoomToFit();
-
-    this.overlayView.unselect();
 
     if (DebugPrintTree) {
       this.debugPrintTree(this.pageView);
@@ -321,5 +319,9 @@ export class SkyView extends Disposable {
       this.frame.width - rulerThickness,
       this.frame.height - rulerThickness
     );
+  }
+
+  registerArtBoard(artBoardView: SkyArtboardView) {
+    this.overlayView.addArtBoardOverlay(artBoardView);
   }
 }

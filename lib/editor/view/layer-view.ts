@@ -386,7 +386,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
   protected calcChildrenRenderFrame(children: SkyBaseLayerView[]) {
     if (children.length === 0) return Rect.Empty;
-    return Rect.mergeRects(children.map((child) => child.bounds));
+    return Rect.mergeRects(children.map((child) => child.bounds).concat(this.frame.onlySize));
   }
 
   parentToLocal(pt: Point) {

@@ -1,18 +1,18 @@
-import { SkyBoxView } from './box-view';
 import sk, { newStrokePaint } from '../../util/canvaskit';
-// import { Rect } from '../../base';
-import { SkyBaseLayerView, SkyBaseView, SkyView } from '..';
+import { SkyArtboardView, SkyBaseLayerView, SkyBaseView } from '..';
 import { Ruler } from './ruler';
 import { Rect, Point } from '../../base';
 import { CornerView } from './corner';
 import { SelectionView } from './selection-view';
 import { RulerThickness } from '../const';
+import { ArtBoardOverlayView } from './artboard-overlay';
 
 export class OverlayView extends SkyBaseView {
   private topRuler: Ruler;
   private leftRuler: Ruler;
   private corner: CornerView;
   private selectionView?: SelectionView;
+  private artBoardOverlays: ArtBoardOverlayView[] = [];
 
   private frame = new Rect();
 
@@ -49,8 +49,17 @@ export class OverlayView extends SkyBaseView {
     this.selectionView = this.addChild(new SelectionView(layer));
   }
 
+  addArtBoardOverlay(artBoardView: SkyArtboardView) {
+    this.artBoardOverlays.push(new ArtBoardOverlayView(artBoardView));
+  }
+
   unselect() {
     this.selectionView = undefined;
+  }
+
+  resetPage() {
+    this.unselect();
+    this.artBoardOverlays.length = 0;
   }
 
   containsPoint() {
@@ -72,6 +81,9 @@ export class OverlayView extends SkyBaseView {
     [this.topRuler, this.leftRuler, this.corner].forEach((view) => view.render());
 
     skCanvas.clipRect(pageFrame.toSk(), sk.CanvasKit.ClipOp.Intersect, true);
+
+    this.artBoardOverlays.forEach((view) => view.render());
+
     this.selectionView?.render();
   }
 

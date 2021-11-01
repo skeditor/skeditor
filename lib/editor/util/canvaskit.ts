@@ -15,17 +15,14 @@ import type {
   ParagraphStyle as SkParagraphStyle,
 } from 'canvaskit-wasm';
 
-// import * as CanvasKitInitFn from 'canvaskit-wasm';
-// import canvaskitWasm from '!!file-loader!canvaskit-wasm/bin/canvaskit.wasm';
+import * as CanvasKitInitFn from 'canvaskit-wasm';
 
-const CanvasKitInitFn = require('canvaskit-wasm');
-
-let canvaskitWasm: any = undefined;
+let canvaskitWasm: string | undefined = undefined;
 
 // node 环境下不需要 locateFile
 if (process.env.NODE_ENV !== 'test') {
   canvaskitWasm = require('!!file-loader!canvaskit-wasm/bin/canvaskit.wasm');
-  canvaskitWasm = canvaskitWasm.default || canvaskitWasm;
+  canvaskitWasm = (canvaskitWasm as unknown as { default: string }).default || canvaskitWasm;
 }
 
 const sk = {} as {
@@ -38,7 +35,7 @@ export const CanvaskitPromised = (CanvasKitInitFn as any)({
   sk.CanvasKit = CanvasKitRes;
   (window as any).CanvasKit = CanvasKitRes;
   return sk.CanvasKit;
-});
+}) as Promise<CanvasKit>;
 
 let fontMgr: FontMgr | undefined;
 

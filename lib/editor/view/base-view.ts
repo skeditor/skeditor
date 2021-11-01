@@ -11,6 +11,7 @@ let viewId = 0;
  * Todo
  * 1 ctx 考虑拆除去
  * 2 继续精简下，看看 layout 是不是需要放在这里
+ * 3 方法都改成 abstract
  */
 export abstract class SkyBaseView {
   id: number;

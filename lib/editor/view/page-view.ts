@@ -3,11 +3,9 @@ import { SkyBaseGroupView } from './';
 import { Rect } from '../base';
 import { ZoomController } from '../controller/zoom-controller';
 import { ZoomState } from '../controller/zoom-state';
-import sk, { newStrokePaint, SkPicture } from '../util/canvaskit';
+import sk, { newStrokePaint, SkPicture, SkColor } from '../util/canvaskit';
 import { TileManager } from '../tile/tile-manager';
 import debug from 'debug';
-
-const DebugDrawBounds = false;
 
 /**
  * Page 现在填满整个 canvas 区域，不用再考虑是否存在 Ruler 而调整 frame。
@@ -25,8 +23,11 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
   zoomState: ZoomState;
   controller!: ZoomController;
 
+  bgColor: SkColor;
+
   constructor(model: SkyPage) {
     super(model);
+    this.bgColor = sk.CanvasKit.parseColorString('#F9F9F9');
 
     this.zoomState = new ZoomState();
     this.initController();
@@ -87,21 +88,8 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
 
   canQuickReject = false;
 
-  _render() {
-    // if (!this._picture) {
-    //   this._makePicture();
-    // }
-
-    // this._picture.
-    // this.ctx.skCanvas.drawPicture(this._picture!);
-
-    super._render();
-    if (DebugDrawBounds) {
-      this.debugDrawBounds();
-    }
-  }
-
   render() {
+    this.renderBg();
     if (this.enableTile) {
       this.renderTiles();
     } else {
@@ -109,7 +97,10 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     }
   }
 
-  contentTilesRequested = false;
+  renderBg() {
+    const { skCanvas } = this.ctx;
+    skCanvas.clear(this.bgColor);
+  }
 
   /**
    * page 下实际内容，到渲染出像素坐标系时，发生的实际缩放值

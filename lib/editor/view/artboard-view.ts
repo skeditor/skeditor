@@ -19,6 +19,8 @@ export class SkyArtboardView extends SkyBaseLayerView<SkyArtboard | SkySymbolMas
 
     this.isSymbolMaster = this.model._class === ClassValue.SymbolMaster;
     this.backgroundColor = this.model.hasBackgroundColor ? this.model.backgroundColor.skColor : sk.CanvasKit.WHITE;
+
+    this.ctx.registerArtBoard(this);
   }
 
   _render() {
