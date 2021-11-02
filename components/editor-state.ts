@@ -85,6 +85,16 @@ export class EditorState {
     this.outlineChangeEvent.value++;
   };
 
+  onToggleLayerVisible = (layer: SkyBaseLayer) => {
+    layer.isVisible = !layer.isVisible;
+    this.outlineChangeEvent.value++;
+  };
+
+  onToggleLayerLock = (layer: SkyBaseLayer) => {
+    layer.isLocked = !layer.isLocked;
+    this.outlineChangeEvent.value++;
+  };
+
   getPathIcon(layer: SkyBaseLayer) {
     const id = layer.objectId;
     const layerView = this.view?.getViewByModelId(id);

@@ -12,6 +12,8 @@
         :layer="item"
         @toggle="onToggleOutlineGroup"
         @select="selectLayer"
+        @toggleLock="onToggleLayerLock"
+        @toggleVisible="onToggleLayerVisible"
         :selected="selectedLayerIdRef === (item as SkyBaseLayer).objectId"
       />
     </RecycleScroller>
@@ -29,7 +31,15 @@ const scrollerRef = ref();
 const realElRef = computed(() => scrollerRef.value?.$el);
 userPerfectScrollbar(realElRef);
 
-const { outlineListRef, onToggleOutlineGroup, selectedPageIndex, selectLayer, selectedLayerIdRef } = useEditor();
+const {
+  outlineListRef,
+  onToggleOutlineGroup,
+  selectedPageIndex,
+  selectLayer,
+  selectedLayerIdRef,
+  onToggleLayerLock,
+  onToggleLayerVisible,
+} = useEditor();
 
 watch(selectedPageIndex, () => {
   if (realElRef.value) {
