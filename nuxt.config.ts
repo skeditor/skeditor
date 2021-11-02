@@ -1,3 +1,4 @@
+import path from 'path';
 import { defineNuxtConfig } from 'nuxt3';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
@@ -16,6 +17,36 @@ export default defineNuxtConfig({
               path: false,
               fs: false,
             };
+
+            const svgCompDir = path.join(__dirname, 'assets/svg-comp');
+
+            config.module?.rules?.forEach((rule) => {
+              if (typeof rule === 'object' && rule.test instanceof RegExp)
+                if (rule.test.test('.svg')) {
+                  rule.exclude = [svgCompDir];
+                }
+            });
+
+            config.module?.rules?.push({
+              test: /\.svg$/,
+              include: [svgCompDir],
+              use: [
+                'vue-loader',
+                path.resolve('./scripts/svg-comp-loader.js'),
+                'svg-sprite-loader',
+                {
+                  loader: 'svgo-loader',
+                  options: {
+                    plugins: [
+                      {
+                        name: 'removeAttrs',
+                        params: { attrs: '(fill|stroke)' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            });
           });
         });
       },

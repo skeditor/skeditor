@@ -124,9 +124,11 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
 
   booleanOperation = sk.CanvasKit.PathOp.XOR;
 
+  isLocked = false;
+
   private _name = '';
 
-  // 可以摄制值，也可以仅仅给 proxy 拦截提供类型定义。
+  // 可以设置值，也可以仅仅给 proxy 拦截提供类型定义。
   tintColor?: SkyColor;
 
   constructor() {
@@ -157,6 +159,7 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
     this.shouldBreakMaskChain = data.shouldBreakMaskChain ?? this.shouldBreakMaskChain;
 
     this.resizingConstraint = data.resizingConstraint ?? this.resizingConstraint;
+    this.isLocked = data.isLocked ?? this.isLocked;
 
     this._name = data.name;
     this._fromJson(data);
@@ -248,6 +251,7 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
  * group 基类，带有 children/layers
  */
 export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchFormat.AnyGroup> extends SkyBaseLayer<T> {
+  // 是否在 layers 列表中展开
   isOutlineExpanded = false;
 
   layers: (
@@ -270,6 +274,7 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
 
   _fromJson(data: T) {
     this.buildLayers(data.layers as SketchFormat.AnyLayer[]);
+    this.isOutlineExpanded = data.layerListExpandedType != SketchFormat.LayerListExpanded.Collapsed;
   }
 
   private buildLayers(layers: SketchFormat.AnyLayer[]) {

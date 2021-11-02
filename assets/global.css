@@ -24,3 +24,7 @@
   height: 0;
   flex: 1;
 }
+
+.icon-comp {
+  fill: currentColor;
+}
