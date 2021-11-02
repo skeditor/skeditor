@@ -67,20 +67,24 @@ export class ZoomController extends Disposable {
    */
   private bindGesture() {
     const startPoint = new Point();
-
+    let lastScale = 1;
     // 应该是 GestureEvent, 但 ts 中没有
     const onGesture = (e: any) => {
       e.preventDefault();
       if (e.type === 'gesturestart') {
         startPoint.x = e.layerX;
         startPoint.y = e.layerY;
+        lastScale = 1;
       }
       if (e.type === 'gesturechange') {
         const gestureScale = (e as any).scale as number;
-        this.service.onScale(gestureScale, startPoint.minus(this.offset));
+        const scaleMultiply = gestureScale / lastScale;
+        lastScale = gestureScale;
+        this.service.onScale(scaleMultiply, startPoint.minus(this.offset));
       }
 
       if (e.type === 'gestureend') {
+        //
       }
     };
     this._disposables.push(fromEvent(this.el, 'gesturestart').subscribe(onGesture));
