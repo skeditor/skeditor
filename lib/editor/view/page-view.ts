@@ -1,6 +1,6 @@
 import { SkyPage } from '../model';
 import { SkyBaseGroupView } from './';
-import { Rect } from '../base';
+import { Point, Rect } from '../base';
 import { ZoomController } from '../controller/zoom-controller';
 import { ZoomState } from '../controller/zoom-state';
 import sk, { newStrokePaint, SkPicture, SkColor } from '../util/canvaskit';
@@ -64,10 +64,6 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
 
     this.zoomState.setPosition(translate);
     this.zoomState.setScale(scale);
-  }
-
-  containsPoint() {
-    return true;
   }
 
   private _makePicture() {
@@ -169,5 +165,9 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     const { bounds } = this;
 
     skCanvas.drawRect(bounds.toSk(), newStrokePaint(2, sk.CanvasKit.RED));
+  }
+
+  containsPoint(pt: Point) {
+    return this.ctx.pageFrame.containsPoint(pt);
   }
 }

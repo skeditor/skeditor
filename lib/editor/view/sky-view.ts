@@ -138,7 +138,6 @@ export class SkyView extends Disposable {
     this.canvasEl.height = canvasHeight;
 
     this.markDirty();
-    this.overlayView.markLayoutDirty();
   }
 
   /**
@@ -304,6 +303,11 @@ export class SkyView extends Disposable {
       this.overlayView.addSelection(view);
       this.markDirty();
     }
+  }
+
+  unselectLayer() {
+    this.overlayView.unselect();
+    this.markDirty();
   }
 
   showRuler = true;

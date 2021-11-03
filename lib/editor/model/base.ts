@@ -274,7 +274,7 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
 
   _fromJson(data: T) {
     this.buildLayers(data.layers as SketchFormat.AnyLayer[]);
-    this.isOutlineExpanded = data.layerListExpandedType != SketchFormat.LayerListExpanded.Collapsed;
+    this.isOutlineExpanded = data.layerListExpandedType === SketchFormat.LayerListExpanded.Expanded;
   }
 
   private buildLayers(layers: SketchFormat.AnyLayer[]) {

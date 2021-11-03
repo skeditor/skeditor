@@ -46,6 +46,10 @@ export class EditorState {
     return this.model?.pages[this.selectedPageIndex.value];
   }
 
+  debugSelectedLayerView() {
+    return this.view?.getViewByModelId(this.selectedLayerIdRef.value);
+  }
+
   selectPage = (idx: number) => {
     if (idx === this.selectedPageIndex.value) {
       return;
@@ -58,6 +62,11 @@ export class EditorState {
     const objectId = layer.objectId;
     this.selectedLayerIdRef.value = objectId;
     this.view?.selectLayer(layer);
+  };
+
+  unselectLayer = () => {
+    this.selectedLayerIdRef.value = '';
+    this.view?.unselectLayer();
   };
 
   private reset() {

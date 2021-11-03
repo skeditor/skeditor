@@ -6,6 +6,7 @@ import { CornerView } from './corner';
 import { SelectionView } from './selection-view';
 import { RulerThickness } from '../const';
 import { ArtBoardOverlayView } from './artboard-overlay';
+import { SkyBoxView } from './box-view';
 
 export class OverlayView extends SkyBaseView {
   private topRuler: Ruler;
@@ -15,6 +16,8 @@ export class OverlayView extends SkyBaseView {
   private artBoardOverlays: ArtBoardOverlayView[] = [];
 
   private frame = new Rect();
+
+  children: SkyBoxView[] = [];
 
   constructor() {
     super();
@@ -29,7 +32,11 @@ export class OverlayView extends SkyBaseView {
     return view;
   }
 
-  layoutSelf() {
+  findView() {
+    return undefined;
+  }
+
+  layout() {
     this.frame = this.ctx.frame.clone();
 
     const pageViewportWidth = this.frame.width - RulerThickness;

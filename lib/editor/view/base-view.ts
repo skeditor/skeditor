@@ -18,7 +18,6 @@ export abstract class SkyBaseView {
   ctx: SkyView;
 
   parent?: SkyBaseView;
-  children: SkyBaseView[] = [];
 
   constructor() {
     this.ctx = SkyView.currentContext;
@@ -29,72 +28,35 @@ export abstract class SkyBaseView {
     }
   }
 
-  get visible() {
-    return true;
-  }
-
-  prependChild<T extends SkyBaseView>(child: T): T {
-    child.parent = this;
-    this.children.unshift(child);
-    return child;
-  }
-
-  addChild<T extends SkyBaseView>(child: T): T {
-    child.parent = this;
-    this.children.push(child);
-    return child;
-  }
+  /**
+   * pt 是相对 canvas 的坐标系
+   */
+  abstract findView(pt: Point): SkyBaseView | undefined;
 
   /**
    * @param point 在 parent 的坐标系中
    */
-  abstract containsPoint(point: Point): boolean;
+  // abstract containsPoint(point: Point): boolean;
 
-  abstract parentToLocal(pt: Point): Point;
+  // abstract parentToLocal(pt: Point): Point;
 
   // pt 在 parent 坐标系中
-  findView(pt: Point) {
-    const localPt = this.parentToLocal(pt);
-    for (let i = this.children.length - 1; i >= 0; i--) {
-      const childView = this.children[i];
-      if (!childView.visible) continue;
-      // const newPt = childView.transform.localTransform.applyInverse(pt);
-      if (childView.containsPoint(localPt)) {
-        return childView.findView(localPt) || childView;
-      }
-    }
-    return undefined;
-  }
-
-  protected _layoutDirty = true;
-
-  markLayoutDirty() {
-    this._layoutDirty = true;
-  }
-
-  layout() {
-    if (!this._layoutDirty) return;
-
-    this.layoutSelf();
-    this.layoutChildren();
-
-    this._layoutDirty = false;
-  }
-
-  layoutSelf() {}
-
-  layoutChildren() {
-    for (let i = 0; i < this.children.length; i++) {
-      const childView = this.children[i];
-
-      // 不可见还是要 layout 的，因为可能有 mask
-      childView.layout();
-    }
-  }
+  // findView(pt: Point) {
+  //   const localPt = this.parentToLocal(pt);
+  //   for (let i = this.children.length - 1; i >= 0; i--) {
+  //     const childView = this.children[i];
+  //     if (!childView.visible) continue;
+  //     // const newPt = childView.transform.localTransform.applyInverse(pt);
+  //     if (childView.containsPoint(localPt)) {
+  //       return childView.findView(localPt) || childView;
+  //     }
+  //   }
+  //   return undefined;
+  // }
 
   debugString() {
     return `<${this.constructor.name}>(${this.id})`;
   }
-  // abstract render(ctx: RenderCtx);
-  abstract render();
+  abstract render(): void;
+  abstract layout(): void;
 }

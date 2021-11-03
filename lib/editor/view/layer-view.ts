@@ -19,7 +19,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   layerUpdateId = 100;
 
   parent?: SkyBaseLayerView;
-  children!: SkyBaseLayerView[];
+  children: SkyBaseLayerView[] = [];
   transform = new Transform();
 
   /**
@@ -47,6 +47,10 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     return this.model.isVisible;
   }
 
+  get interactive() {
+    return this.visible && !this.model.isLocked;
+  }
+
   /**
    * 当前 layer 是否当作蒙版
    * Mask 作用在 siblings 之间
@@ -57,6 +61,64 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
   get shouldBreakMaskChain() {
     return this.model.shouldBreakMaskChain;
+  }
+
+  debugString() {
+    return `<${this.constructor.name}>(${this.id})[${this.model.name}]`;
+  }
+
+  // model 中写入的 frame
+  get intrinsicFrame() {
+    return this.model.frame;
+  }
+
+  protected scaledFrame?: Rect;
+
+  /**
+   * 实际展示的 frame， 在被 instance 缩放时会跟 model 上的不一样。
+   */
+  get frame() {
+    return this.scaledFrame || this.model.frame;
+  }
+
+  get isFrameScaled() {
+    return this.intrinsicFrame.width !== this.frame.width || this.intrinsicFrame.height !== this.frame.height;
+  }
+
+  /**
+   * 在 parent 坐标系中的一个矩形区域，表示当前 layer 的绘制范围。
+   * 因为 frame 表示的是未经过旋转和拉伸的。 所以这里 bounds 跟 frame 可能不同。
+   *
+   * frame 本身已经是内部区域的最小闭包矩形了，范围大于内部实际绘制内容。再经过一次变换后。
+   * bounds 实际上是不怎么紧凑的。但问题不大。
+   */
+  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
+  get bounds() {
+    const { x, y, width, height } = this.renderFrame;
+    const matrix = this.transform.localTransform.toArray(false);
+    const numbs = sk.CanvasKit.Matrix.mapPoints(matrix, [x, y, width, y, width, height, x, height]);
+    const points = [] as Point[];
+    // numbs.forEach(num)
+    for (let i = 0; i < numbs.length; i += 2) {
+      points.push(new Point(numbs[i], numbs[i + 1]));
+    }
+    return Rect.fromPoints(points);
+  }
+
+  /**
+   * frame 的范围不包含 shadow blur stroke 等, renderFrame 则包含。
+   * 主要在 quickReject 时使用。
+   * 坐标在自身的坐标系中，和 frame 不同。（是否可以统一下）
+   */
+  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
+  get renderFrame() {
+    return this.model.inflateFrame(this.frame.onlySize);
+  }
+
+  addChild<T extends SkyBaseLayerView>(child: T): T {
+    child.parent = this;
+    this.children.push(child);
+    return child;
   }
 
   buildChildren(layers: SkyBaseGroup['layers']) {
@@ -324,66 +386,6 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     this.scaledFrame = newFrame;
   }
 
-  debugString() {
-    return `<${this.constructor.name}>(${this.id})[${this.model.name}]`;
-  }
-
-  // model 中写入的 frame
-  get intrinsicFrame() {
-    return this.model.frame;
-  }
-
-  protected scaledFrame?: Rect;
-
-  /**
-   * 实际展示的 frame， 在被 instance 缩放时会跟 model 上的不一样。
-   */
-  get frame() {
-    return this.scaledFrame || this.model.frame;
-  }
-
-  get isFrameScaled() {
-    return this.intrinsicFrame.width !== this.frame.width || this.intrinsicFrame.height !== this.frame.height;
-  }
-
-  /**
-   * 在 parent 坐标系中的一个矩形区域，表示当前 layer 的绘制范围。
-   * 因为 frame 表示的是未经过旋转和拉伸的。 所以这里 bounds 跟 frame 可能不同。
-   *
-   * frame 本身已经是内部区域的最小闭包矩形了，范围大于内部实际绘制内容。再经过一次变换后。
-   * bounds 实际上是不怎么紧凑的。但问题不大。
-   */
-  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
-  get bounds() {
-    const { x, y, width, height } = this.renderFrame;
-    const matrix = this.transform.localTransform.toArray(false);
-    const numbs = sk.CanvasKit.Matrix.mapPoints(matrix, [x, y, width, y, width, height, x, height]);
-    const points = [] as Point[];
-    // numbs.forEach(num)
-    for (let i = 0; i < numbs.length; i += 2) {
-      points.push(new Point(numbs[i], numbs[i + 1]));
-    }
-    return Rect.fromPoints(points);
-  }
-
-  /**
-   * 上面那个 bounds 并不是绘制的实际 bounds, 只是绘制的 path 的实际范围。
-   * 如果遇到了 shadow、stroke、blur 等等，实际的绘制区域是要扩散的
-   *
-   * 这个跟 bounds 还不一样， bounds 是在 parent 坐标系中的，这个是在自身坐标系中的。
-   * 能不能够统一一下呢？感觉还是可以的，不过需要注意一下 frame 的 x,y
-   *
-   * 这个 renderFrame 完全在当前坐标系中，x，y 表示的是当前坐标系中的偏移。
-   * 如果遇到 shadow、blur、stroke 等扩张了渲染区域，那么 x、y 应该是负数。width、height 相对 frame 变大。
-   *
-   * 主要就是为了做 quickReject
-   * 这个是在自身的坐标系中
-   */
-  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
-  get renderFrame() {
-    return this.model.inflateFrame(this.frame.onlySize);
-  }
-
   protected calcChildrenRenderFrame(children: SkyBaseLayerView[]) {
     if (children.length === 0) return Rect.Empty;
     return Rect.mergeRects(children.map((child) => child.bounds).concat(this.frame.onlySize));
@@ -400,6 +402,11 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   }
 
   canQuickReject = true;
+  _layoutDirty = true;
+
+  layoutSelf() {
+    //
+  }
 
   layout() {
     if (this._layoutDirty) {
@@ -416,9 +423,20 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
       this.updateTransform();
       this._transformDirty = false;
     }
+
+    // world transform 每次 render 都要更新的
     this.transform.updateTransform(this.parent?.transform ?? Transform.IDENTITY);
 
     this.layoutChildren();
+  }
+
+  layoutChildren() {
+    for (let i = 0; i < this.children.length; i++) {
+      const childView = this.children[i];
+
+      // 不可见还是要 layout 的，因为可能有 mask
+      childView.layout();
+    }
   }
 
   // 只给外部调用，不支持继承
@@ -462,7 +480,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
   _tryClip() {}
 
   buildLayerPaint() {
-    const { style, frame } = this.model;
+    const { style } = this.model;
     if (!style) {
       this.layerPaint = null;
       return;
@@ -536,54 +554,38 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
 
       skCanvas.saveLayer(this.layerPaint);
     }
-
-    // if (modified) {
-    // CanvasKit.XYWHRect(0, 0, frame.width, frame.height)
-    // 太好了，saveLayer 可以不传 bounds 大小
-    // 如果非要传递的话计算起来还挺麻烦，因为 stroke 通常会超出 frame。
-
     // # Save layer
     // 可以应用 paint 参数类型， （mask filter 不行）
     // Optional SkPaint paint applies alpha, SkColorFilter, SkImageFilter, and SkBlendMode when restore() is called.
     // https://api.skia.org/classSkCanvas.html#a06bd76ce35082366bb6b8e6dfcb6f435
-
-    // skCanvas.saveLayer(layerPaint);
-    // this.savedLayer = true;
-    // window.cnt++;
-    // }
   }
 
   // To be override
   abstract _render();
 
-  // visitChildren(fn: (child: SkyBaseView) => void) {
-
-  // }
-
-  // {
-  // const paint = new sk.CanvasKit.Paint();
-  // paint.setColor(sk.CanvasKit.RED);
-
-  // this.ctx.skCanvas.drawRect(this.model.frame.onlySize.toSk(), paint);
-
-  // }
-
-  // markDirty() {
-  //   this.parent?.markDirty();
-  // }
-
+  /**
+   * @param pt 相对 canvas 左上角的全局坐标。（没有乘以dpi的）
+   */
   containsPoint(pt: Point) {
-    const localPt = this.transform.localTransform.applyInverse(pt);
-    return this.frame.onlySize.containsPoint(localPt);
+    const local = this.transform.worldTransform.applyInverse(pt);
+    const frame = this.frame;
+    return local.x > 0 && local.y > 0 && local.x < frame.width && local.y < frame.height;
   }
 
-  select() {
-    // this.selected = true;
-    // this.ctx.markDirty();
-  }
-
-  unselect() {
-    // this.selected = false;
-    // this.ctx.markDirty();
+  // 查找光标下最里层的一个 view
+  // hover 和 点击的时候逻辑并不通用
+  findView(pt: Point) {
+    if (this.containsPoint(pt)) {
+      for (let i = this.children.length - 1; i >= 0; i--) {
+        const child = this.children[i];
+        if (child.interactive) {
+          const view = child.findView(pt);
+          if (view) return view;
+        }
+      }
+      return this;
+    } else {
+      return undefined;
+    }
   }
 }

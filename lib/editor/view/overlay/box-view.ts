@@ -9,9 +9,19 @@ export class SkyBoxView extends SkyBaseView {
   clip = true;
   backgroundColor?: SkColor;
   shadow?: SkyShadow;
+  visible = true;
+  children: SkyBoxView[] = [];
 
   constructor(public frame: Rect = new Rect()) {
     super();
+  }
+
+  layout() {
+    //
+  }
+
+  findView() {
+    return undefined;
   }
 
   render() {
