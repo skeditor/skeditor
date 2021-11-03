@@ -23,9 +23,10 @@ export class EditorState {
     if (this.outlineChangeEvent.value < 0) return [];
     const model = this.modelRef.value;
     const page = model?.pages[this.selectedPageIndex.value];
-    const ret = [] as SkyBaseLayer[];
-    page?.getOutlineList(ret);
-    return ret;
+    if (page) {
+      return page.getLayerList(this.debugSelectedLayerView()?.model);
+    }
+    return [];
   });
 
   selectedLayerIdRef = ref('');

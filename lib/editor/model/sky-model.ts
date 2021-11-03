@@ -55,7 +55,7 @@ export class SkyModel {
   }
 
   private async initPages() {
-    for (let page of this.data.pages) {
+    for (const page of this.data.pages) {
       const pageJson = await this.readPageFileRefJson(page);
       this.pages.push(new SkyPage().fromJson(pageJson));
     }

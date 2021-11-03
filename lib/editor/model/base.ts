@@ -126,6 +126,8 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
 
   isLocked = false;
 
+  tempExpanded = false;
+
   private _name = '';
 
   // 可以设置值，也可以仅仅给 proxy 拦截提供类型定义。
@@ -206,6 +208,17 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
 
   get name() {
     return this._name;
+  }
+
+  /**
+   * 在 parent 以及 parent's parent 身上调用
+   * 不在当前 layer 上调用
+   */
+  recUp(fn: (layer: SkyBaseLayer) => void) {
+    if (this.parent) {
+      fn(this.parent);
+      this.parent.recUp(fn);
+    }
   }
 
   inflateFrame(rawFrame: Rect) {
@@ -328,7 +341,7 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
       const layer = this.layers[i];
       layer.depth = depth;
       ret.push(layer);
-      if (layer instanceof SkyBaseGroup && layer.isOutlineExpanded) {
+      if (layer instanceof SkyBaseGroup && (layer.isOutlineExpanded || layer.tempExpanded)) {
         layer.getOutlineList(ret, depth + 1);
       }
     }

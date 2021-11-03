@@ -1,4 +1,4 @@
-import { SkyBaseGroup, SketchFormat, SkyModel, ClassValue } from '.';
+import { SkyBaseGroup, SketchFormat, SkyModel, ClassValue, SkyBaseLayer } from '.';
 import { Point } from '../base/point';
 
 export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {
@@ -31,5 +31,18 @@ export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {
     this.frame.y = 0;
     this.frame.width = 0;
     this.frame.height = 0;
+  }
+
+  getLayerList(selected?: SkyBaseLayer) {
+    selected?.recUp((layer) => {
+      layer.tempExpanded = true;
+    });
+
+    const ret: SkyBaseLayer[] = [];
+    this.getOutlineList(ret);
+    selected?.recUp((layer) => {
+      layer.tempExpanded = false;
+    });
+    return ret;
   }
 }
