@@ -69,13 +69,7 @@ export default defineComponent({
   methods: {
     fetchLocalSketchFileList() {
       return fetch(docLists)
-        .then(
-          (res) => res.json(),
-          (err) => {
-            console.error(err);
-            console.log('Cant find local files, please select or drop a file on this web app.');
-          }
-        )
+        .then((res) => res.json())
         .then((val) => {
           this.list = val;
           if (!this.selectedFile) {
@@ -83,6 +77,10 @@ export default defineComponent({
           }
 
           this.loadFile();
+        })
+        .catch(() => {
+          // console.error(err);
+          console.log('Cant find local files, please select or drop a file on this web app.');
         });
     },
     loadFile(this: any) {
