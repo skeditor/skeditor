@@ -4,7 +4,7 @@
       ref="scrollerRef"
       class="scroller"
       :items="outlineListRef"
-      :item-size="26"
+      :item-size="RowHeight"
       key-field="objectId"
       v-slot="{ item }"
     >
@@ -23,16 +23,18 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { RecycleScroller } from 'vue-virtual-scroller';
 import { userPerfectScrollbar } from '~/components/ui/scrollbar-composable';
-import { useEditor } from '~/components/editor-state';
+import { EditorState } from '~/components/editor-state';
 import LayerItem from './layer-item.vue';
 import { SkyBaseLayer } from '~/lib/editor/model';
 
 const scrollerRef = ref();
-const realElRef = computed(() => scrollerRef.value?.$el);
+const realElRef = computed(() => scrollerRef.value?.$el as HTMLElement | undefined);
 userPerfectScrollbar(realElRef);
+
+const RowHeight = 26;
 
 const {
   outlineListRef,
@@ -45,7 +47,39 @@ const {
   onToggleLayerVisible,
   onPointerLeaveLayer,
   onPointerEnterLayer,
-} = useEditor();
+} = EditorState.shared;
+
+watch(selectedLayerIdRef, () => {
+  nextTick(() => {
+    const selectedLayer = EditorState.shared.selectedLayerModel;
+    const containerEl = realElRef.value;
+    if (!selectedLayer || !containerEl) return;
+
+    const list = outlineListRef.value;
+    const idx = list.indexOf(selectedLayer);
+
+    if (idx === -1) return;
+
+    const viewportHeight = containerEl.clientHeight;
+    const start = containerEl.scrollTop;
+    const end = start + viewportHeight;
+
+    const startIdx = Math.ceil(start / RowHeight);
+    const endIdx = Math.floor(end / RowHeight);
+
+    // 移动到最近可见区域
+
+    // top
+    if (idx <= startIdx) {
+      containerEl.scrollTop = idx * RowHeight;
+    }
+
+    // bottom
+    if (idx >= endIdx) {
+      containerEl.scrollTop = idx * RowHeight - viewportHeight + RowHeight;
+    }
+  });
+});
 
 watch(selectedPageIndex, () => {
   if (realElRef.value) {

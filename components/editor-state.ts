@@ -27,7 +27,7 @@ export class EditorState {
     const model = this.modelRef.value;
     const page = model?.pages[this.selectedPageIndex.value];
     if (page) {
-      return page.getLayerList(this.debugSelectedLayerView()?.model);
+      return page.getLayerList(this.selectedLayerModel);
     }
     return [];
   });
@@ -51,8 +51,12 @@ export class EditorState {
     return this.model?.pages[this.selectedPageIndex.value];
   }
 
-  debugSelectedLayerView() {
+  get selectedLayerView() {
     return this.view?.getViewByModelId(this.selectedLayerIdRef.value);
+  }
+
+  get selectedLayerModel() {
+    return this.selectedLayerView?.model;
   }
 
   selectPage = (idx: number) => {
