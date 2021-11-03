@@ -100,12 +100,6 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
         const tempPath = this.path?.copy().transform(transform);
         if (tempPath) {
           transformedBounds = Rect.fromSk(tempPath.getBounds());
-
-          // console.log('Trans bounds:', transformedBounds);
-          // console.log('>>>>>', this.path?.toSVGString());
-          // console.log('>>>>', tempPath.toSVGString());
-          // transformedBounds.x += intrinsicFrame.x;
-          // transformedBounds.y += intrinsicFrame.y;
         }
       }
 
@@ -119,10 +113,6 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
       const bounds = this.path?.getBounds();
 
       const newFrame = bounds ? Rect.fromSk(bounds) : this.intrinsicFrame;
-
-      // console.log('final bounds: ', newFrame);
-
-      // console.log('bounds', this.model.name, newFrame, this.intrinsicFrame);
 
       const { newX, newY } = this.calcOffsetAfterScale(newFrame, transformedBounds);
 
@@ -162,11 +152,11 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
   }
 
   layoutSelf() {
-    this.applySymbolScale();
+    // shapeGroup 下的 children 不需要
+    if (!(this.parent instanceof SkyShapeGroupView)) {
+      this.applySymbolScale();
+    }
   }
-
-  // 覆盖下 layout children 的行为
-  layoutChildren() {}
 
   _render() {
     if (!this._painter) {
