@@ -13,6 +13,7 @@ import { Point } from '../base/point';
 import { EditorState } from '~/components/editor-state';
 import { ClassValue } from '../model';
 import invariant from 'ts-invariant';
+import { throttleTime } from 'rxjs/operators';
 
 export class PointerController extends Disposable {
   selectedView: SkyBaseLayerView | undefined;
@@ -31,6 +32,14 @@ export class PointerController extends Disposable {
       })
     );
 
+    this._disposables.push(
+      fromEvent(view.canvasEl, 'mousemove')
+        .pipe(throttleTime(100))
+        .subscribe((event) => {
+          this.onHover(event as MouseEvent);
+        })
+    );
+
     // this._disposables.push(
     //   fromEvent(view.canvasEl, 'mousedown').subscribe((event) => {
     //     console.log('>>> mouse down');
@@ -47,15 +56,26 @@ export class PointerController extends Disposable {
 
   onClick = (_event: Event) => {
     const event = _event as MouseEvent;
-    const { offsetX, offsetY } = event;
-    const pt = new Point(offsetX, offsetY);
-    const start = Date.now();
-    const targetView = this.findView(pt, this.isDeepKey(event));
-    const cost = Date.now() - start;
 
-    console.log('click find view', cost, offsetX, offsetY, targetView);
+    const targetView = this.findViewFromEvent(event);
     this.select(targetView);
   };
+
+  onHover(event: MouseEvent) {
+    const targetView = this.findViewFromEvent(event);
+    this.view.hoverLayer(targetView);
+  }
+
+  findViewFromEvent(event: MouseEvent) {
+    const { offsetX, offsetY } = event;
+    const pt = new Point(offsetX, offsetY);
+
+    // const start = Date.now();
+    const targetView = this.findView(pt, this.isDeepKey(event));
+    // const cost = Date.now() - start;
+    // console.log('Find view', cost, offsetX, offsetY, targetView);
+    return targetView;
+  }
 
   /**
    * @param pt 相对 canvas 的坐标

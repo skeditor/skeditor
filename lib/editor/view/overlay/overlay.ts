@@ -14,6 +14,7 @@ export class OverlayView extends SkyBaseView {
   private corner: CornerView;
   private selectionView?: SelectionView;
   private artBoardOverlays: ArtBoardOverlayView[] = [];
+  private hoverOverlay?: SelectionView;
 
   private frame = new Rect();
 
@@ -56,6 +57,17 @@ export class OverlayView extends SkyBaseView {
     this.selectionView = this.addChild(new SelectionView(layer));
   }
 
+  setHoverView(layer: SkyBaseLayerView | undefined) {
+    if (layer !== this.hoverOverlay?.layerView) {
+      this.ctx.markDirty();
+    }
+    if (layer) {
+      this.hoverOverlay = new SelectionView(layer);
+    } else {
+      this.hoverOverlay = undefined;
+    }
+  }
+
   addArtBoardOverlay(artBoardView: SkyArtboardView) {
     this.artBoardOverlays.push(new ArtBoardOverlayView(artBoardView));
   }
@@ -65,6 +77,7 @@ export class OverlayView extends SkyBaseView {
   }
 
   resetPage() {
+    this.setHoverView(undefined);
     this.unselect();
     this.artBoardOverlays.length = 0;
   }
@@ -92,6 +105,7 @@ export class OverlayView extends SkyBaseView {
     this.artBoardOverlays.forEach((view) => view.render());
 
     this.selectionView?.render();
+    this.hoverOverlay?.render();
   }
 
   renderSelf() {

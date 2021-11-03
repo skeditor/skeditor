@@ -310,6 +310,10 @@ export class SkyView extends Disposable {
     this.markDirty();
   }
 
+  hoverLayer(layerView: SkyBaseLayerView | undefined) {
+    this.overlayView.setHoverView(layerView);
+  }
+
   showRuler = true;
 
   /**
