@@ -2,7 +2,6 @@ import { Disposable } from '../base/disposable';
 import {
   SkyArtboardView,
   SkyBaseLayerView,
-  SkyBaseView,
   SkyPageView,
   SkyShapeGroupView,
   SkySymbolInstanceView,
@@ -10,7 +9,6 @@ import {
 } from '../view';
 import { fromEvent } from 'rxjs';
 import { Point } from '../base/point';
-import { EditorState } from '~/components/editor-state';
 import { ClassValue } from '../model';
 import invariant from 'ts-invariant';
 import { throttleTime } from 'rxjs/operators';
@@ -58,12 +56,12 @@ export class PointerController extends Disposable {
     const event = _event as MouseEvent;
 
     const targetView = this.findViewFromEvent(event);
-    this.select(targetView);
+    this.view.selectLayer(targetView?.model);
   };
 
   onHover(event: MouseEvent) {
     const targetView = this.findViewFromEvent(event);
-    this.view.hoverLayer(targetView);
+    this.view.hoverLayer(targetView?.model);
   }
 
   findViewFromEvent(event: MouseEvent) {
@@ -74,6 +72,8 @@ export class PointerController extends Disposable {
     const targetView = this.findView(pt, this.isDeepKey(event));
     // const cost = Date.now() - start;
     // console.log('Find view', cost, offsetX, offsetY, targetView);
+
+    invariant(!(targetView instanceof SkyPageView), 'Cant select page view. It should be undefined');
     return targetView;
   }
 
@@ -145,14 +145,5 @@ export class PointerController extends Disposable {
     }
 
     return undefined;
-  }
-
-  select(view: SkyBaseView | undefined) {
-    invariant(!(view instanceof SkyPageView), 'Cant select page view. It should be undefined');
-    if (view instanceof SkyBaseLayerView) {
-      EditorState.shared.selectLayer(view.model);
-    } else {
-      EditorState.shared.unselectLayer();
-    }
   }
 }

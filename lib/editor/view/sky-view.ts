@@ -12,12 +12,39 @@ import sk, {
 
 import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
-import { Observable } from 'rxjs';
+import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { RulerThickness } from './const';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
+
+class PageState {
+  selectedLayerView?: SkyBaseLayerView;
+  hoverLayerView?: SkyBaseLayerView;
+
+  selectionChange = new Subject();
+  hoverChange = new Subject();
+
+  changed = merge(this.selectionChange, this.hoverChange);
+
+  reset() {
+    this.selectLayer(undefined);
+    this.hoverLayer(undefined);
+  }
+
+  selectLayer(view: SkyBaseLayerView | undefined) {
+    if (this.selectedLayerView === view) return;
+    this.selectedLayerView = view;
+    this.selectionChange.next();
+  }
+
+  hoverLayer(view: SkyBaseLayerView | undefined) {
+    if (this.hoverLayerView === view) return;
+    this.hoverLayerView = view;
+    this.hoverChange.next();
+  }
+}
 
 export class SkyView extends Disposable {
   static currentContext: SkyView;
@@ -48,6 +75,8 @@ export class SkyView extends Disposable {
 
   viewMap = new Map<string, SkyBaseLayerView>();
 
+  pageState = new PageState();
+
   /**
    * 由于需要确保 canvaskit 初始化完成，不能直接调用构造函数
    */
@@ -72,9 +101,10 @@ export class SkyView extends Disposable {
     this.attachParentNode(foreignEl);
 
     this._disposables.push(
-      model.changed$.subscribe(() => {
+      merge(model.changed$, this.pageState.changed).subscribe(() => {
         this.markDirty();
       }),
+
       new PointerController(this)
     );
   }
@@ -172,6 +202,7 @@ export class SkyView extends Disposable {
 
     invariant(skyPage !== undefined, `Page not exist: [${i}]`);
     this.overlayView.resetPage();
+    this.pageState.reset();
     const skyPageView = new SkyPageView(skyPage);
 
     this.pageView = skyPageView;
@@ -297,21 +328,22 @@ export class SkyView extends Disposable {
     return this.viewMap.get(id);
   }
 
-  selectLayer(layer: SkyBaseLayer) {
-    const view = this.getViewByModelId(layer.objectId);
-    if (view) {
-      this.overlayView.addSelection(view);
-      this.markDirty();
+  selectLayer(layer: SkyBaseLayer | undefined) {
+    if (layer) {
+      const view = this.getViewByModelId(layer.objectId);
+      this.pageState.selectLayer(view);
+    } else {
+      this.pageState.selectLayer(undefined);
     }
   }
 
-  unselectLayer() {
-    this.overlayView.unselect();
-    this.markDirty();
-  }
-
-  hoverLayer(layerView: SkyBaseLayerView | undefined) {
-    this.overlayView.setHoverView(layerView);
+  hoverLayer(layer: SkyBaseLayer | undefined) {
+    if (layer) {
+      const view = this.getViewByModelId(layer.objectId);
+      this.pageState.hoverLayer(view);
+    } else {
+      this.pageState.hoverLayer(undefined);
+    }
   }
 
   showRuler = true;

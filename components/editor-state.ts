@@ -2,10 +2,13 @@ import JSZip from 'jszip';
 import { SkyBaseGroup, SkyBaseLayer, SkyBaseShapeLike, SkyModel } from '~/lib/editor/model';
 import { SkyBasePathView, SkyView } from '~/lib/editor/view';
 import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
-import { computed, shallowRef, ref } from 'vue';
+import { computed, shallowRef, ref, toRaw } from 'vue';
 import { Rect } from '~/lib/editor/base/rect';
+import { Subscription } from 'rxjs';
 export class EditorState {
   static shared = new EditorState();
+
+  bindings = [] as Subscription[];
 
   modelRef = shallowRef<SkyModel>();
   viewRef = shallowRef<SkyView>();
@@ -30,6 +33,7 @@ export class EditorState {
   });
 
   selectedLayerIdRef = ref('');
+  hoveredLayerIdRef = ref('');
 
   get pages() {
     return this.pagesRef.value;
@@ -60,14 +64,11 @@ export class EditorState {
   };
 
   selectLayer = (layer: SkyBaseLayer) => {
-    const objectId = layer.objectId;
-    this.selectedLayerIdRef.value = objectId;
     this.view?.selectLayer(layer);
   };
 
   unselectLayer = () => {
-    this.selectedLayerIdRef.value = '';
-    this.view?.unselectLayer();
+    this.view?.selectLayer(undefined);
   };
 
   private reset() {
@@ -88,6 +89,22 @@ export class EditorState {
 
     this.viewRef.value = view;
     this.modelRef.value = model;
+
+    this.initBinding(view);
+  }
+
+  initBinding(view: SkyView) {
+    this.bindings.forEach((sub) => sub.unsubscribe());
+    this.bindings.length = 0;
+
+    this.bindings.push(
+      view.pageState.selectionChange.subscribe(() => {
+        this.selectedLayerIdRef.value = view.pageState.selectedLayerView?.model.objectId ?? '';
+      }),
+      view.pageState.hoverChange.subscribe(() => {
+        this.hoveredLayerIdRef.value = view.pageState.hoverLayerView?.model.objectId ?? '';
+      })
+    );
   }
 
   onToggleOutlineGroup = (layer: SkyBaseGroup) => {
@@ -103,6 +120,14 @@ export class EditorState {
   onToggleLayerLock = (layer: SkyBaseLayer) => {
     layer.isLocked = !layer.isLocked;
     this.outlineChangeEvent.value++;
+  };
+
+  onPointerEnterLayer = (layer: SkyBaseLayer) => {
+    this.view?.hoverLayer(layer);
+  };
+
+  onPointerLeaveLayer = () => {
+    this.view?.hoverLayer(undefined);
   };
 
   getPathIcon(layer: SkyBaseLayer) {

@@ -1,5 +1,5 @@
 import { SketchFormat, SkySymbolMaster, SkyPage, SkImage, SkyStyle } from '.';
-import JSZip, { file } from 'jszip';
+import JSZip from 'jszip';
 import invariant from 'ts-invariant';
 import { Subject } from 'rxjs';
 import sk from '../util/canvaskit';

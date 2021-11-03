@@ -26,6 +26,23 @@ export class OverlayView extends SkyBaseView {
     this.topRuler = this.addChild(new Ruler(true));
     this.leftRuler = this.addChild(new Ruler(false));
     this.corner = this.addChild(new CornerView());
+
+    this.initBinding();
+  }
+
+  initBinding() {
+    const pageState = this.ctx.pageState;
+    pageState.selectionChange.subscribe(() => {
+      this.selectionView = pageState.selectedLayerView
+        ? this.addChild(new SelectionView(pageState.selectedLayerView))
+        : undefined;
+    });
+
+    pageState.hoverChange.subscribe(() => {
+      this.hoverOverlay = pageState.hoverLayerView
+        ? this.addChild(new SelectionView(pageState.hoverLayerView, true))
+        : undefined;
+    });
   }
 
   addChild<T extends SkyBaseView>(view: T) {
@@ -47,38 +64,11 @@ export class OverlayView extends SkyBaseView {
     this.topRuler.frame = new Rect(RulerThickness, 0, pageViewportWidth, RulerThickness);
   }
 
-  addSelection(layer: SkyBaseLayerView) {
-    if (this.selectionView) {
-      const idx = this.children.indexOf(this.selectionView);
-      if (idx !== -1) {
-        this.children.splice(idx, 1);
-      }
-    }
-    this.selectionView = this.addChild(new SelectionView(layer));
-  }
-
-  setHoverView(layer: SkyBaseLayerView | undefined) {
-    if (layer !== this.hoverOverlay?.layerView) {
-      this.ctx.markDirty();
-    }
-    if (layer) {
-      this.hoverOverlay = new SelectionView(layer);
-    } else {
-      this.hoverOverlay = undefined;
-    }
-  }
-
   addArtBoardOverlay(artBoardView: SkyArtboardView) {
     this.artBoardOverlays.push(new ArtBoardOverlayView(artBoardView));
   }
 
-  unselect() {
-    this.selectionView = undefined;
-  }
-
   resetPage() {
-    this.setHoverView(undefined);
-    this.unselect();
     this.artBoardOverlays.length = 0;
   }
 
@@ -104,8 +94,8 @@ export class OverlayView extends SkyBaseView {
 
     this.artBoardOverlays.forEach((view) => view.render());
 
-    this.selectionView?.render();
     this.hoverOverlay?.render();
+    this.selectionView?.render();
   }
 
   renderSelf() {

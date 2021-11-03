@@ -15,6 +15,9 @@
         @toggleLock="onToggleLayerLock"
         @toggleVisible="onToggleLayerVisible"
         :selected="selectedLayerIdRef === (item as SkyBaseLayer).objectId"
+        :hovered="hoveredLayerIdRef === (item as SkyBaseLayer).objectId"
+        @mouseenter="onPointerEnterLayer(item as SkyBaseLayer)"
+        @mouseleave="onPointerLeaveLayer"
       />
     </RecycleScroller>
   </div>
@@ -36,9 +39,12 @@ const {
   onToggleOutlineGroup,
   selectedPageIndex,
   selectLayer,
+  hoveredLayerIdRef,
   selectedLayerIdRef,
   onToggleLayerLock,
   onToggleLayerVisible,
+  onPointerLeaveLayer,
+  onPointerEnterLayer,
 } = useEditor();
 
 watch(selectedPageIndex, () => {

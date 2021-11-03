@@ -5,14 +5,22 @@
  * 确保 stroke-width 固定。
  */
 import { SkyBaseLayerView } from '..';
-import sk, { CanvaskitPromised, newStrokePaint, SkColor } from '../../util/canvaskit';
+import sk, { CanvaskitPromised, newStrokePaint, SkPaint } from '../../util/canvaskit';
 import { SkyBoxView } from './box-view';
 
-let color: SkColor;
-let color2: SkColor;
+let selectPaint: SkPaint;
+let hoverPaint: SkPaint;
+
 CanvaskitPromised.then(() => {
-  color = sk.CanvasKit.Color(21, 129, 205, 1);
-  color2 = sk.CanvasKit.Color(21, 129, 205, 0.6);
+  const colorSelect = sk.CanvasKit.Color(21, 129, 205, 1);
+
+  // const colorHover = sk.CanvasKit.Color(21, 129, 205, 0.6);
+
+  selectPaint = newStrokePaint(2, colorSelect);
+  hoverPaint = newStrokePaint(2, colorSelect);
+
+  const dashEffect = sk.CanvasKit.PathEffect.MakeDash([5, 5]);
+  hoverPaint.setPathEffect(dashEffect);
 });
 
 export class SelectionView extends SkyBoxView {
@@ -24,6 +32,6 @@ export class SelectionView extends SkyBoxView {
   renderSelf() {
     const actualFrame = this.layerView.frame.onlySize.applyMatrix(this.layerView.transform.worldTransform);
     const { skCanvas } = this.ctx;
-    skCanvas.drawRect(actualFrame.toSk(), newStrokePaint(2, this.isHover ? color : color2));
+    skCanvas.drawRect(actualFrame.toSk(), this.isHover ? hoverPaint : selectPaint);
   }
 }

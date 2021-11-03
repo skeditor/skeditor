@@ -1,5 +1,5 @@
 import { IZoomListener } from './zoom-controller';
-import { BehaviorSubject, Observable, Subject, merge, of } from 'rxjs';
+import { BehaviorSubject, Observable, merge } from 'rxjs';
 import { Point } from '../base/point';
 import sk from '../util/canvaskit';
 
@@ -11,7 +11,7 @@ export class ZoomState implements IZoomListener {
 
   private _position$ = new BehaviorSubject<Point>(new Point(0, 0));
 
-  changed$: Observable<any>;
+  changed$: Observable<unknown>;
 
   constructor() {
     this.changed$ = merge(this._position$, this._scale$);

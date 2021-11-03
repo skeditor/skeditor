@@ -1,7 +1,7 @@
 <template>
   <div
     class="layer-item"
-    :class="{ selected: selected, invisible: !layer.isVisible, locked: layer.isLocked }"
+    :class="{ selected: selected, invisible: !layer.isVisible, locked: layer.isLocked, hovered: hovered }"
     @click="emit('select', layer)"
   >
     <div :style="spacingStyle"></div>
@@ -38,6 +38,7 @@ import LockOpenIcon from '~/assets/svg-comp/lock-open.svg';
 
 const props = defineProps<{
   selected: boolean;
+  hovered: boolean;
   layer: SkyBaseLayer;
 }>();
 
@@ -65,6 +66,7 @@ const spacingStyle = computed(() => ({
   align-items: center;
   cursor: default;
   padding: 0 4px;
+  border: 1px solid transparent;
 }
 
 .layer-item.selected {
@@ -73,6 +75,11 @@ const spacingStyle = computed(() => ({
 }
 .layer-item.invisible {
   opacity: 0.4;
+}
+
+.layer-item.hovered:not(.selected),
+.layer-item:hover:not(.selected) {
+  border: 1px dashed blue;
 }
 
 .layer-item:hover .op-icon {
