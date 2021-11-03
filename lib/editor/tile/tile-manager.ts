@@ -180,29 +180,7 @@ export class TileManager {
   debugTexture(scale: number, x: number, y: number) {
     const image = this.getTile(scale, x, y);
     if (!image) return;
-
-    const width = image.width();
-    const height = image.height();
-
-    const data = image.readPixels(0, 0, {
-      ...this.ctx.skSurface!.imageInfo(),
-      width,
-      height,
-    })!;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d')!;
-
-    const imageData = context.createImageData(width, height);
-    imageData.data.set(data);
-    context.putImageData(imageData, 0, 0);
-
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      window.open(url);
-    });
+    this.ctx.getImgFromSkImage(image);
   }
 
   dispose() {

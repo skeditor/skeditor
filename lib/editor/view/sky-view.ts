@@ -1,4 +1,4 @@
-import { SkyBaseLayer, SkyModel } from '../model';
+import { SkImage, SkyBaseLayer, SkyModel } from '../model';
 import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView, OverlayView, SkyArtboardView } from '.';
 import { Disposable, Rect } from '../base';
 import sk, {
@@ -363,5 +363,64 @@ export class SkyView extends Disposable {
 
   registerArtBoard(artBoardView: SkyArtboardView) {
     this.overlayView.addArtBoardOverlay(artBoardView);
+  }
+
+  exportSelection() {
+    const view = this.pageState.selectedLayerView;
+    if (!view) {
+      alert('Select a layer first.');
+      return;
+    }
+
+    const img = this.renderView(view, 3);
+    this.getImgFromSkImage(img);
+  }
+
+  renderView(view: SkyBaseLayerView, scale: number) {
+    const frame = view.renderFrame;
+
+    const surface = this.makeOffscreenSurface(frame.width * scale, frame.height * scale);
+    const canvas = surface.getCanvas();
+    this.pushCanvas(canvas);
+    canvas.scale(scale, scale);
+    canvas.translate(-frame.x, -frame.y);
+
+    try {
+      view._render();
+    } finally {
+      this.popCanvas();
+    }
+
+    surface.flush();
+
+    return surface.makeImageSnapshot();
+  }
+
+  getImgFromSkImage(image: SkImage) {
+    const width = image.width();
+    const height = image.height();
+
+    const data = image.readPixels(0, 0, {
+      ...this.skSurface.imageInfo(),
+      width,
+      height,
+    });
+
+    invariant(data, 'readPixels failed');
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    invariant(context, '2d canvas context failed');
+
+    const imageData = context.createImageData(width, height);
+    imageData.data.set(data);
+    context.putImageData(imageData, 0, 0);
+
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      window.open(url);
+    });
   }
 }

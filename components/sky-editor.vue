@@ -7,7 +7,7 @@
       </select>
 
       <div class="flex-auto"></div>
-      <!-- <button>Save</button> -->
+      <button @click="onExport">Export Selection</button>
       <FileButton @pick="onPickFile" />
     </nav>
     <div class="editor-body">
@@ -119,6 +119,9 @@ export default defineComponent({
     },
     onPickFile(file: File) {
       file.arrayBuffer().then((buffer) => this.openSketch(buffer));
+    },
+    onExport() {
+      EditorState.shared.view?.exportSelection();
     },
   },
 });
