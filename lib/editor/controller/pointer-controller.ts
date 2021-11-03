@@ -12,6 +12,7 @@ import { fromEvent } from 'rxjs';
 import { Point } from '../base/point';
 import { EditorState } from '~/components/editor-state';
 import { ClassValue } from '../model';
+import invariant from 'ts-invariant';
 
 export class PointerController extends Disposable {
   selectedView: SkyBaseLayerView | undefined;
@@ -19,16 +20,37 @@ export class PointerController extends Disposable {
   constructor(private view: SkyView) {
     super();
 
+    this._disposables.push(
+      fromEvent(view.canvasEl, 'contextmenu').subscribe((event) => {
+        const mEvent = event as MouseEvent;
+        // ctrl 按左键，触发 context menu
+        if (mEvent.button === 0) {
+          event.preventDefault();
+          this.onClick(event);
+        }
+      })
+    );
+
+    // this._disposables.push(
+    //   fromEvent(view.canvasEl, 'mousedown').subscribe((event) => {
+    //     console.log('>>> mouse down');
+    //     event.preventDefault();
+    //   })
+    // );
+
     this._disposables.push(fromEvent(view.canvasEl, 'click').subscribe(this.onClick));
+  }
+
+  private isDeepKey(event: MouseEvent) {
+    return event.metaKey || event.ctrlKey;
   }
 
   onClick = (_event: Event) => {
     const event = _event as MouseEvent;
     const { offsetX, offsetY } = event;
-    // const view
     const pt = new Point(offsetX, offsetY);
     const start = Date.now();
-    const targetView = this.findView(pt, event.metaKey);
+    const targetView = this.findView(pt, this.isDeepKey(event));
     const cost = Date.now() - start;
 
     console.log('click find view', cost, offsetX, offsetY, targetView);
@@ -36,9 +58,8 @@ export class PointerController extends Disposable {
   };
 
   /**
-   * 这里有两种方式，一种是 pixi.js 那样，把查找逻辑放在外面，好处是逻辑可以独立放在外面。
-   * 另一种方法，可以像 faster 那样，在 view 上提供方法，进行递归查找，这样的好处是递归简单，children 还可以根据需要选择不同结构。
-   * @param pt
+   * @param pt 相对 canvas 的坐标
+   * @param deepest deep select
    */
   findView(pt: Point, deepest: boolean): SkyBaseLayerView | undefined {
     const pageView = this.view.pageView;
@@ -107,15 +128,9 @@ export class PointerController extends Disposable {
   }
 
   select(view: SkyBaseView | undefined) {
+    invariant(!(view instanceof SkyPageView), 'Cant select page view. It should be undefined');
     if (view instanceof SkyBaseLayerView) {
-      if (view instanceof SkyPageView) {
-        EditorState.shared.unselectLayer();
-      } else {
-        EditorState.shared.selectLayer(view.model);
-      }
-      // this.selectedView?.unselect();
-      // view.select();
-      // this.selectedView = view;
+      EditorState.shared.selectLayer(view.model);
     } else {
       EditorState.shared.unselectLayer();
     }
