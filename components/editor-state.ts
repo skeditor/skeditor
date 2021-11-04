@@ -1,9 +1,8 @@
 import JSZip from 'jszip';
-import { SkyBaseGroup, SkyBaseLayer, SkyBaseShapeLike, SkyModel } from '~/lib/editor/model';
+import { SkyBaseGroup, SkyBaseLayer, SkyModel } from '~/lib/editor/model';
 import { SkyBasePathView, SkyView } from '~/lib/editor/view';
 import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
-import { computed, shallowRef, ref, toRaw } from 'vue';
-import { Rect } from '~/lib/editor/base/rect';
+import { computed, shallowRef, ref } from 'vue';
 import { Subscription } from 'rxjs';
 export class EditorState {
   static shared = new EditorState();
@@ -27,7 +26,7 @@ export class EditorState {
     const model = this.modelRef.value;
     const page = model?.pages[this.selectedPageIndex.value];
     if (page) {
-      return page.getLayerList(this.selectedLayerModel);
+      return page.getLayerList();
     }
     return [];
   });
@@ -112,6 +111,10 @@ export class EditorState {
     this.bindings.push(
       view.pageState.selectionChange.subscribe(() => {
         this.selectedLayerIdRef.value = view.pageState.selectedLayerView?.model.objectId ?? '';
+        if (this.selectedLayerModel) {
+          this.selectedPageModel?.expandLayers(this.selectedLayerModel);
+          this.outlineChangeEvent.value++;
+        }
       }),
       view.pageState.hoverChange.subscribe(() => {
         this.hoveredLayerIdRef.value = view.pageState.hoverLayerView?.model.objectId ?? '';

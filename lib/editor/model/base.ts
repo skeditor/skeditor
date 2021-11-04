@@ -126,7 +126,8 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
 
   isLocked = false;
 
-  tempExpanded = false;
+  // 是否在 layers 列表中展开
+  isOutlineExpanded = false;
 
   private _name = '';
 
@@ -264,9 +265,6 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
  * group 基类，带有 children/layers
  */
 export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchFormat.AnyGroup> extends SkyBaseLayer<T> {
-  // 是否在 layers 列表中展开
-  isOutlineExpanded = false;
-
   layers: (
     | SkyGroup
     | SkyShapeGroup
@@ -341,7 +339,7 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
       const layer = this.layers[i];
       layer.depth = depth;
       ret.push(layer);
-      if (layer instanceof SkyBaseGroup && (layer.isOutlineExpanded || layer.tempExpanded)) {
+      if (layer instanceof SkyBaseGroup && layer.isOutlineExpanded) {
         layer.getOutlineList(ret, depth + 1);
       }
     }

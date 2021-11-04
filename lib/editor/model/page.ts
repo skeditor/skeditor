@@ -33,16 +33,16 @@ export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {
     this.frame.height = 0;
   }
 
-  getLayerList(selected?: SkyBaseLayer) {
-    selected?.recUp((layer) => {
-      layer.tempExpanded = true;
-    });
-
+  getLayerList() {
     const ret: SkyBaseLayer[] = [];
     this.getOutlineList(ret);
-    selected?.recUp((layer) => {
-      layer.tempExpanded = false;
-    });
+
     return ret;
+  }
+
+  expandLayers(selected: SkyBaseLayer) {
+    selected.recUp((layer) => {
+      layer.isOutlineExpanded = true;
+    });
   }
 }
