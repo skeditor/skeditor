@@ -39,8 +39,8 @@ export default defineNuxtConfig({
                   options: {
                     plugins: [
                       {
-                        name: 'removeAttrs',
-                        params: { attrs: '(fill|stroke)' },
+                        name: 'convertColors',
+                        params: { currentColor: true },
                       },
                     ],
                   },

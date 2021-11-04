@@ -12,7 +12,9 @@
     </nav>
     <div class="editor-body">
       <Outline />
-      <div class="canvas-container" ref="canvasContainer"> </div>
+      <div class="canvas-container" ref="canvasContainer">
+        <EmptyPlaceholder v-if="isEmpty" @pick="onPickFile" />
+      </div>
     </div>
   </section>
 </template>
@@ -22,6 +24,7 @@ import { defineComponent } from 'vue';
 import FileButton from './file-button.vue';
 import Outline from './outline/outline.vue';
 import { EditorState } from './editor-state';
+import EmptyPlaceholder from './empty-placeholder.vue';
 import { watch } from 'vue';
 
 const docLists = 'http://localhost:3031/docs';
@@ -45,9 +48,11 @@ export default defineComponent({
   components: {
     FileButton,
     Outline,
+    EmptyPlaceholder,
   },
   data() {
     return {
+      isEmpty: true,
       list: [],
       pages: [] as string[],
       selectedFile: (localStorage.getItem('lastChooseFile') || '') as string,
@@ -94,6 +99,7 @@ export default defineComponent({
 
     async openSketch(buffer: ArrayBuffer) {
       await EditorState.shared.openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement);
+      this.isEmpty = false;
       this.pages = EditorState.shared.pages;
       if (!this.selectedPage) {
         this.selectedPage = this.pages[0];
@@ -150,6 +156,7 @@ export default defineComponent({
 .canvas-container {
   flex: 1;
   width: 0;
+  position: relative;
 }
 
 h1 {

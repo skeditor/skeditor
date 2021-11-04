@@ -80,13 +80,21 @@ export class EditorState {
   }
 
   async openSketchArrayBuffer(arrayBuffer: ArrayBuffer, el: HTMLElement) {
+    let zipFile: JSZip;
+
+    try {
+      zipFile = await JSZip.loadAsync(arrayBuffer);
+    } catch (err) {
+      alert('Sorry!\nThis is not a zip file. It may be created by an old version sketch app.');
+      throw err;
+    }
+    await CanvaskitPromised;
+
     this.reset();
     // dispose previous view
     // but not set to undefined now
     this.viewRef.value?.dispose();
 
-    const zipFile = await JSZip.loadAsync(arrayBuffer);
-    await CanvaskitPromised;
     const model = new SkyModel();
     await model.readZipFile(zipFile);
     const view = await SkyView.create(model, el);
