@@ -15,6 +15,7 @@ import { PointerController } from '../controller/pointer-controller';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { RulerThickness } from './const';
+import { Services } from './services';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -77,6 +78,8 @@ export class SkyView extends Disposable {
 
   pageState = new PageState();
 
+  services: Services;
+
   /**
    * 由于需要确保 canvaskit 初始化完成，不能直接调用构造函数
    */
@@ -94,11 +97,12 @@ export class SkyView extends Disposable {
     super();
     SkyView.currentContext = this;
 
-    this.overlayView = new OverlayView();
-
     this.createCanvasEl();
 
     this.attachParentNode(foreignEl);
+
+    this.overlayView = new OverlayView();
+    this.services = new Services(this);
 
     this._disposables.push(
       merge(model.changed$, this.pageState.changed).subscribe(() => {

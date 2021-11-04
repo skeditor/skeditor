@@ -10,8 +10,9 @@
     >
       <LayerItem
         :layer="item"
+        @dblclick="focusLayer(item)"
+        @click="selectLayer(item)"
         @toggle="onToggleOutlineGroup"
-        @select="selectLayer"
         @toggleLock="onToggleLayerLock"
         @toggleVisible="onToggleLayerVisible"
         :selected="selectedLayerIdRef === (item as SkyBaseLayer).objectId"
@@ -41,6 +42,7 @@ const {
   onToggleOutlineGroup,
   selectedPageIndex,
   selectLayer,
+  focusLayer,
   hoveredLayerIdRef,
   selectedLayerIdRef,
   onToggleLayerLock,

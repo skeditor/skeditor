@@ -133,7 +133,7 @@ export class Rect {
    * 如果内容比较小，则放大 （也不要放太大了）
    * 如果内容比较大，则缩小
    */
-  layoutRectInCenter(content: Rect, padding: number = 0) {
+  layoutRectInCenter(content: Rect, padding = 0) {
     const actualContainer = padding ? this.inflate(-padding) : this;
 
     const scaleW = actualContainer.width / content.width;

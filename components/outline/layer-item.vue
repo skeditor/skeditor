@@ -2,7 +2,6 @@
   <div
     class="layer-item"
     :class="{ selected: selected, invisible: !layer.isVisible, locked: layer.isLocked, hovered: hovered }"
-    @click="emit('select', layer)"
   >
     <div :style="spacingStyle"></div>
     <img
@@ -44,7 +43,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (event: 'toggle', layer: SkyBaseGroup): void;
-  (event: 'select', layer: SkyBaseLayer): void;
   (event: 'toggleLock', layer: SkyBaseLayer): void;
   (event: 'toggleVisible', layer: SkyBaseLayer): void;
 }>();

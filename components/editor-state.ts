@@ -70,6 +70,13 @@ export class EditorState {
     this.view?.selectLayer(layer);
   };
 
+  focusLayer = (layer: SkyBaseLayer) => {
+    const layerView = this.view?.getViewByModelId(layer.objectId);
+    if (layerView) {
+      this.view?.services.viewport.moveIntoView(layerView);
+    }
+  };
+
   unselectLayer = () => {
     this.view?.selectLayer(undefined);
   };
