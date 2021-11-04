@@ -146,12 +146,7 @@ export class EditorState {
     const id = layer.objectId;
     const layerView = this.view?.getViewByModelId(id);
     if (layerView instanceof SkyBasePathView && layerView.path) {
-      const bounds = Rect.fromSk(layerView.path.getBounds());
-      const path = layerView.pathAsSvg;
-      return {
-        bounds,
-        path,
-      };
+      return layerView.svgBuildInfo;
     }
   }
 }

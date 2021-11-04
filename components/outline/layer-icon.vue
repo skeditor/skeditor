@@ -1,6 +1,6 @@
 <template>
   <svg class="layer-icon" v-if="pathIcon" :viewBox="pathIcon.viewBox" xmlns="http://www.w3.org/2000/svg">
-    <path :d="pathIcon.path" stroke="#707070" fill="#b8b8b8" :stroke-width="pathIcon.strokeWidth" />
+    <path :d="pathIcon.path" stroke="#707070" fill="#b8b8b8" :stroke-width="pathIcon.strokeWidth" fill-rule="evenodd" />
   </svg>
   <div v-else class="layer-icon" :style="icon ? { 'background-image': `url(${icon})` } : undefined" />
 </template>

@@ -64,6 +64,33 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
   //   this._needUpdateSymbolScale = false;
   // }
 
+  // 应用了当前 frame x,y rotation ,flip 状态的 path
+  // 1 在 instance 内拉伸时，需要计算 bounds 这个时候会用到
+  // 2 在 shapeGroup 进行 boolean op 时也应该用应用了 transform 的
+  // Todo 优化下避免重复计算
+  @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
+  get pathWithTransform() {
+    const intrinsicFrame = this.intrinsicFrame;
+    const { rotation, isFlippedHorizontal, isFlippedVertical } = this.model;
+    if (rotation || isFlippedHorizontal || isFlippedVertical) {
+      const flipX = isFlippedHorizontal ? -1 : 1;
+      const flipY = isFlippedVertical ? -1 : 1;
+
+      // 为什么外面那个 radian 不需要乘上 flip？这里又需要
+      // 我虽然试出来了，但我并没有搞明白为什么
+      const radian = -1 * flipX * flipY * degreeToRadian(rotation);
+
+      const transform = sk.CanvasKit.Matrix.multiply(
+        sk.CanvasKit.Matrix.translated(intrinsicFrame.x, intrinsicFrame.y),
+        sk.CanvasKit.Matrix.rotated(radian, intrinsicFrame.width / 2, intrinsicFrame.height / 2),
+        sk.CanvasKit.Matrix.scaled(flipX, flipY, intrinsicFrame.width / 2, intrinsicFrame.height / 2)
+      );
+      return this.path?.copy().transform(transform);
+    } else {
+      return this.path?.copy().offset(intrinsicFrame.x, intrinsicFrame.y);
+    }
+  }
+
   /**
    * shape 需要矢量拉伸，以确保 border 不变形
    */
@@ -81,26 +108,12 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
 
       const intrinsicFrame = this.intrinsicFrame;
 
-      let transformedBounds = intrinsicFrame;
-
       // 计算出 scale 前 shape 受 rotate、flip 影响后的真实的 bounds
-      if (rotation || isFlippedHorizontal || isFlippedVertical) {
-        // 为什么外面那个 radian 不需要乘上 flip？ 为什么这里又需要
-        // fuck 我虽然摸索出来了，但我并没有搞明白为什么。
-        const radian = -1 * flipX * flipY * degreeToRadian(rotation);
 
-        const transform = sk.CanvasKit.Matrix.multiply(
-          // sk.CanvasKit.Matrix.identity(),
-          // sk.CanvasKit.Matrix.identity()
-          sk.CanvasKit.Matrix.translated(intrinsicFrame.x, intrinsicFrame.y),
-          sk.CanvasKit.Matrix.rotated(radian, intrinsicFrame.width / 2, intrinsicFrame.height / 2),
-          sk.CanvasKit.Matrix.scaled(flipX, flipY, intrinsicFrame.width / 2, intrinsicFrame.height / 2)
-        );
-
-        const tempPath = this.path?.copy().transform(transform);
-        if (tempPath) {
-          transformedBounds = Rect.fromSk(tempPath.getBounds());
-        }
+      let transformedBounds = intrinsicFrame;
+      const { pathWithTransform } = this;
+      if (pathWithTransform) {
+        transformedBounds = Rect.fromSk(pathWithTransform.getBounds());
       }
 
       const transform = sk.CanvasKit.Matrix.multiply(
@@ -138,8 +151,13 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
   }
 
   @CacheGetter<SkyBaseLayerView>((ins) => ins.layerUpdateId)
-  get pathAsSvg() {
-    return this.path?.toSVGString();
+  get svgBuildInfo() {
+    const path = this.pathWithTransform;
+    if (!path) return;
+    return {
+      path: path.toSVGString(),
+      bounds: Rect.fromSk(path.getBounds()),
+    };
   }
 
   updateTransform() {
@@ -185,23 +203,23 @@ export class SkyShapeGroupView extends SkyBasePathView<SkyShapeGroup> {
     if (!this.children.length) return;
 
     const firstChild = this.children[0];
-    let ret = firstChild.path;
+    let ret = firstChild.pathWithTransform;
     if (this.children.length === 1) return ret;
 
     if (!ret) return;
 
     ret = ret.copy();
-    const { frame } = firstChild;
-    ret.offset(frame.x, frame.y);
+    // const { frame } = firstChild;
+    // ret.offset(frame.x, frame.y);
 
     this.children.slice(1).reduce((resultPath: SkPath | undefined, child: SkyShapePathLikeView | SkyTextView) => {
-      const opPath = child.path;
-      const { frame } = child;
+      const opPath = child.pathWithTransform;
+      // const { frame } = child;
 
       // 如果有一个无法转换成 path 就暂停
       if (!resultPath || !opPath) return undefined;
 
-      opPath.offset(frame.x, frame.y);
+      // opPath.offset(frame.x, frame.y);
       // try {
       resultPath.op(opPath, child.model.booleanOperation);
       // } catch (err) {

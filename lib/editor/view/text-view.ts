@@ -25,6 +25,11 @@ export class SkyTextView extends SkyBaseLayerView<SkyText> {
     return this.painter.path;
   }
 
+  // Todo
+  get pathWithTransform() {
+    return this.path;
+  }
+
   get shadowPath() {
     return undefined;
   }
@@ -405,7 +410,7 @@ class TextPainter {
 
 // https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight
 // https://fonts.google.com/specimen/Roboto#standard-styles
-function getHintFontWeight(fontName: string = '') {
+function getHintFontWeight(fontName = '') {
   fontName = fontName.toLowerCase();
   const CanvasKit = sk.CanvasKit;
   const map = {
@@ -419,7 +424,7 @@ function getHintFontWeight(fontName: string = '') {
     ultra: CanvasKit.FontWeight.ExtraBold,
     extra: CanvasKit.FontWeight.ExtraBold,
   };
-  for (let key in map) {
+  for (const key in map) {
     if (fontName.includes(key)) {
       return map[key];
     }
