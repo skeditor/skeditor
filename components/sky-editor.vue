@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <nav class="nav">
-      <h1>Sketch Editor</h1>
+      <h1>Sky Editor</h1>
       <select v-if="list && list.length" v-model="selectedFile" @change="onFileChange">
         <option v-for="(file, idx) in list" :key="idx">{{ file }}</option>
       </select>

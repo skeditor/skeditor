@@ -23,9 +23,7 @@ const emit = defineEmits<{
   (e: 'pick', value: File): void;
 }>();
 
-const { pick } = useSketchFilePicker((file) => {
-  emit('pick', file);
-});
+const { pick } = useSketchFilePicker((file) => emit('pick', file));
 
 function isDropFile(event: DragEvent) {
   const dropItems = Array.from(event.dataTransfer?.items || []);
@@ -61,8 +59,7 @@ function onDrop(event: DragEvent) {
   if (file) {
     emit('pick', file);
   } else {
-    // alert should drop sketch file
-    alert('It it now a sketch file');
+    alert('It it not a sketch file!');
   }
 }
 </script>

@@ -11,6 +11,8 @@ export class ZoomState implements IZoomListener {
 
   private _position$ = new BehaviorSubject<Point>(new Point(0, 0));
 
+  private _minScale = MIN_SCALE;
+
   changed$: Observable<unknown>;
 
   constructor() {
@@ -44,7 +46,9 @@ export class ZoomState implements IZoomListener {
   // Todo 这个应该是有点问题的，pageView 现在不是铺满了全屏幕的了
   onScale(scaleMultiply: number, center: Point) {
     let newScale = this.scale * scaleMultiply;
-    newScale = Math.min(Math.max(newScale, MIN_SCALE), MAX_SCALE);
+    newScale = Math.min(Math.max(newScale, this._minScale), MAX_SCALE);
+
+    if (newScale === this.scale) return;
 
     const invertedMat = this.interMatrix;
 
@@ -64,6 +68,10 @@ export class ZoomState implements IZoomListener {
 
   setScale(scale: number) {
     this._scale$.next(scale);
+  }
+
+  setMinScale(scale: number) {
+    this._minScale = scale;
   }
 
   setPosition(pt: Point) {

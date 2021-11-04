@@ -49,6 +49,18 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     });
   }
 
+  get minScale() {
+    // 最大的一边占用 1/4 viewport
+    const bounds = this.bounds;
+    const frame = this.ctx.frame;
+    const conWidth = frame.width / 4;
+    const conHeight = frame.height / 4;
+    const scaleX = conWidth / bounds.width;
+    const scaleY = conHeight / bounds.height;
+    const minScale = Math.min(scaleX, scaleY);
+    return Math.min(minScale, 1);
+  }
+
   updateTransform() {
     const { position, scale } = this.zoomState;
     this.transform.position.set(position.x, position.y);
@@ -64,6 +76,7 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
 
     this.zoomState.setPosition(translate);
     this.zoomState.setScale(scale);
+    this.zoomState.setMinScale(this.minScale);
   }
 
   private _makePicture() {
