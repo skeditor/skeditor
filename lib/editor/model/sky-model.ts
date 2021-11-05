@@ -48,10 +48,10 @@ export class SkyModel {
   }
 
   private collectStyles() {
-    this.data.foreignTextStyles.map((obj) => obj.localSharedStyle).forEach(this.registerSharedStyle);
-    this.data.foreignLayerStyles.map((obj) => obj.localSharedStyle).forEach(this.registerSharedStyle);
-    this.data.layerTextStyles.objects.forEach(this.registerSharedStyle);
-    this.data.layerStyles.objects.forEach(this.registerSharedStyle);
+    this.data.foreignTextStyles?.map((obj) => obj.localSharedStyle).forEach(this.registerSharedStyle);
+    this.data.foreignLayerStyles?.map((obj) => obj.localSharedStyle).forEach(this.registerSharedStyle);
+    this.data.layerTextStyles?.objects?.forEach(this.registerSharedStyle);
+    this.data.layerStyles?.objects?.forEach(this.registerSharedStyle);
   }
 
   private async initPages() {

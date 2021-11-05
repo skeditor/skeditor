@@ -2,6 +2,7 @@ import { Disposable } from '../base/disposable';
 import { fromEvent } from 'rxjs';
 import bowser from 'bowser';
 import { Point } from '../base/point';
+import { fromDragEvent } from '../util/drag';
 
 export interface IZoomListener {
   // set final scale
@@ -21,12 +22,39 @@ export class ZoomController extends Disposable {
 
     this._disposables.push(fromEvent(this.el, 'wheel').subscribe(this.onWheel));
 
+    this.bindDragEvents();
+
     if (bowser.safari) {
       this.bindGesture();
     }
   }
 
-  private bindEvents() {}
+  private bindDragEvents() {
+    let preDx = 0;
+    let preDy = 0;
+
+    this._disposables.push(
+      fromDragEvent(this.el).subscribe((event) => {
+        switch (event.type) {
+          case 'dragStart':
+            preDx = 0;
+            preDy = 0;
+            return;
+          case 'dragging': {
+            const { dx, dy } = event;
+            const offset = new Point(preDx - dx, preDy - dy);
+            this.service.onOffset(offset);
+            preDx = dx;
+            preDy = dy;
+            return;
+          }
+          case 'dragEnd':
+            // console.log('drag end');
+            return;
+        }
+      })
+    );
+  }
 
   public setOffset(offset: Point) {
     this.offset = offset;

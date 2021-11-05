@@ -1,4 +1,5 @@
-import { ref, Ref, watchEffect, defineEmits, getCurrentInstance } from 'vue';
+import { ref, Ref, watchEffect } from 'vue';
+import { fromDragEvent } from '~/lib/editor/util/drag';
 
 const createEmits = () => ({
   dragStart: ref(0),
@@ -17,62 +18,24 @@ export function useDrag(elRef: Ref<HTMLElement | undefined>, cursor?: string) {
     dispose = undefined;
     if (!el) return;
 
-    const handler = (event: MouseEvent) => {
-      startDraggable(event, emits, cursor);
-    };
-
-    el.addEventListener('mousedown', handler);
+    const dragOb = fromDragEvent(el, cursor).subscribe((e) => {
+      switch (e.type) {
+        case 'dragStart':
+          emits.dragStart.value++;
+          return;
+        case 'dragging':
+          emits.offset.value = { x: e.dx, y: e.dy };
+          return;
+        case 'dragEnd':
+          emits.dragEnd.value++;
+          return;
+      }
+    });
 
     dispose = () => {
-      el.removeEventListener('mousedown', handler);
+      dragOb.unsubscribe();
     };
   });
 
   return emits;
-}
-
-function startDraggable(event: MouseEvent, emits: ReturnType<typeof createEmits>, cursor?: string) {
-  event.preventDefault();
-  const downPt = { x: event.clientX, y: event.clientY };
-  let isMove = false;
-  let dragMaskEl: HTMLElement | undefined;
-
-  document.addEventListener('mousemove', handelMoveEvent);
-  document.addEventListener('mouseup', mouseup);
-
-  function handelMoveEvent(e: MouseEvent) {
-    const dx = e.clientX - downPt.x;
-    const dy = e.clientY - downPt.y;
-    // 拖动 3px 后开始触发移动
-    if (!isMove) {
-      const diff = Math.hypot(dx, dy);
-      if (diff > 3) {
-        isMove = true;
-        dragMaskEl = document.createElement('div');
-        dragMaskEl.className = 'global-drag-mask';
-        if (cursor) {
-          dragMaskEl.style.cursor = cursor;
-        }
-        document.body.appendChild(dragMaskEl);
-        emits.dragStart.value++;
-      } else {
-        return;
-      }
-    }
-    e.stopPropagation();
-
-    emits.offset.value = { x: dx, y: dy };
-  }
-
-  function mouseup(event: MouseEvent) {
-    isMove = false;
-    event.stopPropagation();
-    event.preventDefault();
-    if (dragMaskEl && dragMaskEl.parentNode) {
-      dragMaskEl.parentNode.removeChild(dragMaskEl);
-    }
-    document.removeEventListener('mousemove', handelMoveEvent);
-    document.removeEventListener('mouseup', mouseup);
-    emits.dragEnd.value++;
-  }
 }

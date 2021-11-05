@@ -421,7 +421,7 @@ export class SkyBaseShapeLike<T extends SketchShapeLikes = SketchShapeLikes> ext
 
   _fromJson(data: T) {
     this.isClosed = data.isClosed ?? this.isClosed;
-    this.points = data.points.map((point) => new SkyCurvePoint(this.frame).fromJson(point));
+    this.points = data.points?.map((point) => new SkyCurvePoint(this.frame).fromJson(point)) || [];
   }
 }
 
@@ -503,19 +503,20 @@ export class SkyText extends SkyBaseLayer<SketchFormat.Text> {
   _fromJson(data: SketchFormat.Text) {
     this._attributedString = {
       string: data.attributedString.string,
-      attributes: data.attributedString.attributes.map((attr) => {
-        const color = new SkyColor();
-        if (attr.attributes.MSAttributedStringColorAttribute) {
-          color.fromJson(attr.attributes.MSAttributedStringColorAttribute);
-        }
-        return {
-          ...attr,
-          attributes: {
-            ...attr.attributes,
-            MSAttributedStringColorAttribute: color,
-          },
-        };
-      }),
+      attributes:
+        data.attributedString.attributes?.map((attr) => {
+          const color = new SkyColor();
+          if (attr.attributes.MSAttributedStringColorAttribute) {
+            color.fromJson(attr.attributes.MSAttributedStringColorAttribute);
+          }
+          return {
+            ...attr,
+            attributes: {
+              ...attr.attributes,
+              MSAttributedStringColorAttribute: color,
+            },
+          };
+        }) || [],
     };
   }
 
