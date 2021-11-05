@@ -103,7 +103,6 @@ export abstract class SkyBaseObject<T extends SketchFormat.AnyObject> {
  * Layer 基类，拥有 frame、scale、rotation 等等
  */
 export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchFormat.AnyLayer> extends SkyBaseObject<T> {
-  depth = 0;
   parent?: SkyBaseLayer;
 
   frame = new Rect();
@@ -126,8 +125,17 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
 
   isLocked = false;
 
+  /* begin outline 相关状态 */
+
   // 是否在 layers 列表中展开
+  isSelected = false;
   isOutlineExpanded = false;
+
+  // 两个由 parents 决定的临时状态
+  subSelected = false;
+  subInVisible = false;
+  depth = 0;
+  /* end outline 相关状态 */
 
   private _name = '';
 
@@ -334,13 +342,17 @@ export abstract class SkyBaseGroup<T extends SketchFormat.AnyGroup = SketchForma
     this.layers.forEach((layer) => (layer.parent = this));
   }
 
-  getOutlineList(ret: SkyBaseLayer[], depth = 0) {
+  getOutlineList(ret: SkyBaseLayer[], depth = 0, subInVisible = false, subSelected = false) {
+    const _subInVisible = subInVisible || !this.isVisible;
+    const _subSelected = subSelected || this.isSelected;
     for (let i = this.layers.length - 1; i >= 0; i--) {
       const layer = this.layers[i];
       layer.depth = depth;
+      layer.subInVisible = _subInVisible;
+      layer.subSelected = _subSelected;
       ret.push(layer);
       if (layer instanceof SkyBaseGroup && layer.isOutlineExpanded) {
-        layer.getOutlineList(ret, depth + 1);
+        layer.getOutlineList(ret, depth + 1, _subInVisible, _subSelected);
       }
     }
   }

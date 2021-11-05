@@ -36,7 +36,6 @@ export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {
   getLayerList() {
     const ret: SkyBaseLayer[] = [];
     this.getOutlineList(ret);
-
     return ret;
   }
 

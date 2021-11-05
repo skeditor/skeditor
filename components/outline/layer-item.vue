@@ -1,7 +1,14 @@
 <template>
   <div
     class="layer-item"
-    :class="{ selected: selected, invisible: !layer.isVisible, locked: layer.isLocked, hovered: hovered }"
+    :class="{
+      selected: layer.isSelected,
+      subselected: layer.subSelected,
+      invisible: !layer.isVisible,
+      subinvisible: layer.subInVisible,
+      locked: layer.isLocked,
+      hovered: hovered,
+    }"
   >
     <div :style="spacingStyle"></div>
     <img
@@ -65,19 +72,24 @@ const spacingStyle = computed(() => ({
   cursor: default;
   padding: 0 4px;
   border: 1px solid transparent;
+  border-radius: 4px;
 }
 
 .layer-item.selected {
-  background-color: #7fa7c3;
-  border-radius: 4px;
+  background-color: #a5a5a5;
 }
-.layer-item.invisible {
-  opacity: 0.4;
+.layer-item.subselected {
+  background-color: #a5a5a556;
+  border-radius: 0px;
+}
+.layer-item.invisible,
+.layer-item.subinvisible {
+  opacity: 0.5;
 }
 
 .layer-item.hovered:not(.selected),
 .layer-item:hover:not(.selected) {
-  border: 1px dashed blue;
+  border: 1px dashed black;
 }
 
 .layer-item:hover .op-icon {

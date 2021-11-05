@@ -36,7 +36,14 @@ class PageState {
 
   selectLayer(view: SkyBaseLayerView | undefined) {
     if (this.selectedLayerView === view) return;
+    const pre = this.selectedLayerView;
+    if (pre) {
+      pre.model.isSelected = false;
+    }
     this.selectedLayerView = view;
+    if (view) {
+      view.model.isSelected = true;
+    }
     this.selectionChange.next();
   }
 
