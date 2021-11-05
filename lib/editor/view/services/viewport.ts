@@ -1,8 +1,36 @@
-import { SkyBaseLayerView } from '..';
+import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { SkyBaseLayerView, SkyView } from '..';
 import { Matrix } from '../../base';
 import { BaseService } from './base';
 
 export class ViewportService extends BaseService {
+  viewportScale: Observable<number>;
+
+  constructor(v: SkyView) {
+    super(v);
+
+    this.viewportScale = this.view.pageState.currentPage.pipe(
+      switchMap(() => {
+        return this.zoomState ? this.zoomState.scale$ : of(1);
+      })
+    );
+  }
+
+  scaleUp() {
+    this.scaleDir(1);
+  }
+
+  scaleDown() {
+    this.scaleDir(-1);
+  }
+
+  private scaleDir(dir: number) {
+    if (!this.zoomState) return;
+    const scaleMultiply = 1 + dir * 0.1;
+    this.zoomState.onScale(scaleMultiply, this.view.pageFrame.center);
+  }
+
   moveIntoView(layerView: SkyBaseLayerView) {
     if (!this.zoomState) return;
 

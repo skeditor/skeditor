@@ -7,7 +7,7 @@ const MIN_SCALE = 1 / 1e3;
 const MAX_SCALE = 1e3;
 
 export class ZoomState implements IZoomListener {
-  private _scale$ = new BehaviorSubject<number>(1);
+  public scale$ = new BehaviorSubject<number>(1);
 
   private _position$ = new BehaviorSubject<Point>(new Point(0, 0));
 
@@ -16,7 +16,7 @@ export class ZoomState implements IZoomListener {
   changed$: Observable<unknown>;
 
   constructor() {
-    this.changed$ = merge(this._position$, this._scale$);
+    this.changed$ = merge(this._position$, this.scale$);
   }
 
   get position() {
@@ -24,7 +24,7 @@ export class ZoomState implements IZoomListener {
   }
 
   get scale() {
-    return this._scale$.value;
+    return this.scale$.value;
   }
 
   // 应用了 position、scale 后相当于这个 matrix
@@ -55,7 +55,7 @@ export class ZoomState implements IZoomListener {
     // 应该保持不变的点
     const anchor = sk.CanvasKit.Matrix.mapPoints(invertedMat, [center.x, center.y]);
 
-    this._scale$.next(newScale);
+    this.scale$.next(newScale);
 
     // scale 后偏移到的新位置
     const anchorShifted = sk.CanvasKit.Matrix.mapPoints(this.matrix, anchor);
@@ -67,7 +67,7 @@ export class ZoomState implements IZoomListener {
   }
 
   setScale(scale: number) {
-    this._scale$.next(scale);
+    this.scale$.next(scale);
   }
 
   setMinScale(scale: number) {

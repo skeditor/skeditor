@@ -1,10 +1,10 @@
-import { ref } from 'vue';
+import { useLocalStorage } from '../composables/localstorage';
 
 const InitHeight = 150;
 const MinHeight = 150;
 
 export function setupPages() {
-  const height = ref(InitHeight);
+  const height = useLocalStorage('PagesScrollHeight', InitHeight);
 
   let _dragStartHeight = 0;
 

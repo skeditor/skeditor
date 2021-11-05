@@ -12,7 +12,7 @@ import sk, {
 
 import invariant from 'ts-invariant';
 import { PointerController } from '../controller/pointer-controller';
-import { Observable, Subject, merge } from 'rxjs';
+import { Observable, Subject, merge, BehaviorSubject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { RulerThickness } from './const';
 import { Services } from './services';
@@ -26,6 +26,8 @@ class PageState {
 
   selectionChange = new Subject();
   hoverChange = new Subject();
+
+  currentPage = new BehaviorSubject(0);
 
   changed = merge(this.selectionChange, this.hoverChange);
 
@@ -56,7 +58,6 @@ class PageState {
 
 export class SkyView extends Disposable {
   static currentContext: SkyView;
-
   canvasEl!: HTMLCanvasElement;
   grContext!: SkGrDirectContext;
   pageView?: SkyPageView;
@@ -220,6 +221,9 @@ export class SkyView extends Disposable {
     this.pageView.layout();
 
     skyPageView.zoomToFit();
+
+    // 相当于一个 page change event
+    this.pageState.currentPage.next(i);
 
     if (DebugPrintTree) {
       this.debugPrintTree(this.pageView);

@@ -2,8 +2,9 @@ import JSZip from 'jszip';
 import { SkyBaseGroup, SkyBaseLayer, SkyModel } from '~/lib/editor/model';
 import { SkyBasePathView, SkyView } from '~/lib/editor/view';
 import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
-import { computed, shallowRef, ref } from 'vue';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
+import { Ref, onUnmounted, watchEffect, ref, shallowRef, computed } from 'vue';
+import { switchMap } from 'rxjs/operators';
 export class EditorState {
   static shared = new EditorState();
 
@@ -13,6 +14,8 @@ export class EditorState {
   viewRef = shallowRef<SkyView>();
 
   selectedPageIndex = ref(-1);
+
+  filename = '';
 
   pagesRef = computed(() => {
     const model = this.modelRef.value;
@@ -33,6 +36,18 @@ export class EditorState {
 
   selectedLayerIdRef = ref('');
   hoveredLayerIdRef = ref('');
+
+  pageScale$ = refToRx(this.viewRef).pipe(
+    switchMap((view) => {
+      if (view) {
+        return view.services.viewport.viewportScale;
+      } else {
+        return of(1);
+      }
+    })
+  );
+
+  constructor() {}
 
   get pages() {
     return this.pagesRef.value;
@@ -56,6 +71,10 @@ export class EditorState {
 
   get selectedLayerModel() {
     return this.selectedLayerView?.model;
+  }
+
+  get currentPageView() {
+    return this.view?.pageView;
   }
 
   selectPage = (idx: number) => {
@@ -85,7 +104,7 @@ export class EditorState {
     this.selectedPageIndex.value = -1;
   }
 
-  async openSketchArrayBuffer(arrayBuffer: ArrayBuffer, el: HTMLElement) {
+  async openSketchArrayBuffer(filename: string, arrayBuffer: ArrayBuffer, el: HTMLElement) {
     let zipFile: JSZip;
 
     try {
@@ -107,7 +126,7 @@ export class EditorState {
 
     this.viewRef.value = view;
     this.modelRef.value = model;
-
+    this.filename = filename;
     this.initBinding(view);
   }
 
@@ -159,6 +178,34 @@ export class EditorState {
       return layerView.svgBuildInfo;
     }
   }
+
+  usePageScale() {
+    return rxToRef(this.pageScale$);
+  }
+
+  get editorTitle() {
+    if (!this.view) return '';
+    return `${this.filename} / ${this.selectedPageModel?.name || 'No Page Name'}`;
+  }
+}
+
+function rxToRef<T>(ob: Observable<T>): Ref<T | undefined> {
+  const ret: Ref<T | undefined> = ref();
+  const sub = ob.subscribe((val) => {
+    ret.value = val;
+  });
+  onUnmounted(() => {
+    sub.unsubscribe();
+  });
+  return ret;
+}
+
+function refToRx<T>(ref: Ref<T>) {
+  const sb = new BehaviorSubject<T>(ref.value);
+  watchEffect(() => {
+    sb.next(ref.value);
+  });
+  return sb;
 }
 
 export function useEditor() {

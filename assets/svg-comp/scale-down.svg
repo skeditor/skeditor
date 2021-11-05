@@ -1,0 +1,20 @@
+<svg
+  width="18px"
+  height="2px"
+  viewBox="0 0 18 2"
+  version="1.1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+>
+  <g
+    id="nav-bar"
+    stroke="none"
+    stroke-width="1"
+    fill="none"
+    fill-rule="evenodd"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line x1="1" y1="1" x2="17" y2="1" id="Line" stroke="#FFFFFF" stroke-width="1.5"></line>
+  </g>
+</svg>

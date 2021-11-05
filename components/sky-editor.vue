@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <nav class="nav">
+    <!-- <nav class="nav">
       <h1>Sky Editor</h1>
       <select v-if="list && list.length" v-model="selectedFile" @change="onFileChange">
         <option v-for="(file, idx) in list" :key="idx">{{ file }}</option>
@@ -9,7 +9,8 @@
       <div class="flex-auto"></div>
       <button @click="onExport">Export Selection</button>
       <FileButton @pick="onPickFile" />
-    </nav>
+    </nav> -->
+    <Nav @pick="onPickFile" />
     <div class="editor-body">
       <Outline />
       <div class="canvas-container" ref="canvasContainer">
@@ -19,36 +20,23 @@
   </section>
 </template>
 <script lang="ts">
-import { SkyView } from '../lib/editor/view';
 import { defineComponent } from 'vue';
 import FileButton from './file-button.vue';
 import Outline from './outline/outline.vue';
 import { EditorState } from './editor-state';
 import EmptyPlaceholder from './empty-placeholder.vue';
 import { watch } from 'vue';
+import Nav from './nav.vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
-
-async function loadSketchFile(url: string) {
-  return fetch(url).then((res) => {
-    if (res.status !== 200) {
-      return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
-    }
-    return res.arrayBuffer();
-  });
-}
-
-declare var window: Window &
-  typeof globalThis & {
-    skyView?: SkyView;
-  };
 
 export default defineComponent({
   components: {
     FileButton,
     Outline,
     EmptyPlaceholder,
+    Nav,
   },
   data() {
     return {
@@ -58,10 +46,6 @@ export default defineComponent({
       selectedFile: (localStorage.getItem('lastChooseFile') || '') as string,
       selectedPage: (localStorage.getItem('lastChosePage') || '') as string,
     };
-  },
-
-  beforeDestroy() {
-    window.skyView?.dispose();
   },
 
   mounted() {
@@ -88,17 +72,29 @@ export default defineComponent({
           console.log('Cant find local files, please select or drop a file on this web app.');
         });
     },
+    loadSketchFile(url: string) {
+      return fetch(url).then((res) => {
+        if (res.status !== 200) {
+          return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
+        }
+        return res.arrayBuffer();
+      });
+    },
     loadFile(this: any) {
-      loadSketchFile(api + this.selectedFile)
-        .then((buffer) => this.openSketch(buffer))
+      this.loadSketchFile(api + this.selectedFile)
+        .then((buffer) => this.openSketch(this.selectedFile, buffer))
         .catch((err) => {
           console.error(err);
           console.log('Cant load local files. Please check local development env.');
         });
     },
 
-    async openSketch(buffer: ArrayBuffer) {
-      await EditorState.shared.openSketchArrayBuffer(buffer, this.$refs['canvasContainer'] as HTMLElement);
+    async openSketch(filename: string, buffer: ArrayBuffer) {
+      await EditorState.shared.openSketchArrayBuffer(
+        this.removeExt(filename),
+        buffer,
+        this.$refs['canvasContainer'] as HTMLElement
+      );
       this.isEmpty = false;
       this.pages = EditorState.shared.pages;
       if (!this.selectedPage) {
@@ -118,14 +114,14 @@ export default defineComponent({
         idx = 0;
         this.selectedPage = this.pages[0];
       }
-
       EditorState.shared.selectPage(idx);
     },
-    onPickFile(file: File) {
-      file.arrayBuffer().then((buffer) => this.openSketch(buffer));
+    removeExt(str: string) {
+      const extIdx = str.toLowerCase().lastIndexOf('.sketch');
+      return str.slice(0, extIdx);
     },
-    onExport() {
-      EditorState.shared.view?.exportSelection();
+    onPickFile(file: File) {
+      file.arrayBuffer().then((buffer) => this.openSketch(file.name, buffer));
     },
   },
 });
@@ -136,7 +132,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
 }
-.nav {
+/* .nav {
   background: rgb(33, 31, 31);
   height: 32px;
   color: white;
@@ -145,7 +141,7 @@ export default defineComponent({
   padding: 0 12px;
   z-index: 1000;
   position: relative;
-}
+} */
 
 .editor-body {
   flex: 1;

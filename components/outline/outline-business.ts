@@ -1,11 +1,14 @@
 import { ref } from 'vue';
+import { useLocalStorage } from '../composables/localstorage';
 
 const InitWidth = 300;
 const MinWidth = 250;
 const MaxWidth = 500;
 
+export const outlineWidth = useLocalStorage('OutlineWidth', InitWidth);
+
 export function setupOutline() {
-  const width = ref(InitWidth);
+  const width = outlineWidth;
   let _dragStartWidth = 0;
 
   function onDragStart() {
