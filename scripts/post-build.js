@@ -20,4 +20,8 @@ const html = tpl({ scripts: manifest.initial.map((filename) => `/_nuxt/${filenam
 
 fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 
+if (process.env.PUBLISH_DIRS) {
+  cp.execSync(`cp -r .output/* ${process.env.PUBLISH_DIRS}`);
+}
+
 console.log('>>>> Copied to .output <<<<');
