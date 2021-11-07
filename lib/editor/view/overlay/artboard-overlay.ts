@@ -39,6 +39,8 @@ export class ArtBoardOverlayView extends SkyBoxView {
   renderSelf() {
     const actualFrame = this.artBoardView.frame.onlySize.applyMatrix(this.artBoardView.transform.worldTransform);
 
+    if (!this.ctx.pageFrame.intersect(actualFrame)) return;
+
     // ArtBoard Frame
     const { skCanvas } = this.ctx;
     const skRect = actualFrame.toSk();

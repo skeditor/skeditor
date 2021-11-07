@@ -1,6 +1,7 @@
 import { SkySymbolInstance, SkySymbolMaster } from '../model';
 import { SkyBaseLayerView, SkyArtboardView } from './';
 import { CacheGetter } from '../util/misc';
+import { Rect } from '../base';
 
 export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
   requireLayerDropShadow = true;
@@ -13,7 +14,10 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
   }
 
   get intrinsicFrame() {
-    return this.model.refModel!.frame;
+    if (!this.model.refModel) {
+      return this.model.frame;
+    }
+    return this.model.refModel.frame;
   }
 
   @CacheGetter<SkySymbolInstanceView>((ins) => ins.layerUpdateId)
@@ -25,43 +29,12 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
     return this.model.isVisible && !!this.model.refModel;
   }
 
-  // get frame() {
-  //   return this.sca this.model.frame;
-  // }
-
-  // get needLaout
-
-  // 如果相比 refModel 并没有拉伸，那么可以省去 resize 的步骤
-
-  // 但是 instance 在 instance 内的时候，也是要 layoutSelf 之后才知道，是否变形了
-
   layoutSelf() {
     this.commonLayoutSelf();
   }
 
-  // get masterFrame() {
-  //   return this.model.refModel?.frame;
-  // }
-
-  // get instanceFrame() {
-  //   return this.frame;
-  // }
-
-  // get needLayout() {
-  //   return (
-  //     this.masterFrame!.width !== this.instanceFrame.width || this.masterFrame!.height == this.instanceFrame.height
-  //   );
-  // }
-
   _render() {
     if (!this.model.refModel) return;
-
-    // 这里就简单处理，因为目前看起来，就只需要从 instance 开始 layout
-    // children 们自己去取 parent 身上的信息，然后判断该如何具体 layout
-    // 这样也可以减轻抽象设计上的负担， 而 child 身上多做点判断
-    // if (this.isFrameScaled) {
-    //   this.layout();
-    // }
 
     this.ctx.enterSymbolInstance(this);
     this.renderChildren();

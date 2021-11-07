@@ -69,7 +69,7 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
   }
 
   zoomToFit() {
-    const containerBounds = this.ctx.frame;
+    const containerBounds = this.ctx.pageFrame;
     const contentBounds = this.bounds;
 
     const { scale, translate } = containerBounds.layoutRectInCenter(contentBounds, 20);

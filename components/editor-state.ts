@@ -115,13 +115,21 @@ export class EditorState {
     }
     await CanvaskitPromised;
 
-    this.reset();
     // dispose previous view
     // but not set to undefined now
-    this.viewRef.value?.dispose();
 
     const model = new SkyModel();
     await model.readZipFile(zipFile);
+    if (!model.isSupportedVersion) {
+      alert(
+        `Sorry!\nThis file version is too old, it is created by ${model.appInfo}.\nThis application cant handle it right now.`
+      );
+      return;
+    }
+
+    this.viewRef.value?.dispose();
+    this.reset();
+
     const view = await SkyView.create(model, el);
 
     this.viewRef.value = view;

@@ -1,16 +1,10 @@
 <template>
   <section class="page">
-    <!-- <nav class="nav">
-      <h1>Sky Editor</h1>
+    <Nav @pick="onPickFile">
       <select v-if="list && list.length" v-model="selectedFile" @change="onFileChange">
         <option v-for="(file, idx) in list" :key="idx">{{ file }}</option>
       </select>
-
-      <div class="flex-auto"></div>
-      <button @click="onExport">Export Selection</button>
-      <FileButton @pick="onPickFile" />
-    </nav> -->
-    <Nav @pick="onPickFile" />
+    </Nav>
     <div class="editor-body">
       <Outline />
       <div class="canvas-container" ref="canvasContainer">

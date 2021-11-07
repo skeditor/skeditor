@@ -1,6 +1,5 @@
 import { ClassValue, SkyBaseLayer, SkyBaseGroup, SkyColor, SkyAttributeString, SkyStyle } from '.';
 import SketchFormat from '@sketch-hq/sketch-file-format-ts';
-import { SymbolInstance } from '@sketch-hq/sketch-file-format-ts/dist/cjs/types';
 
 export class SkySymbolMaster extends SkyBaseGroup<SketchFormat.SymbolMaster> {
   readonly _class = ClassValue.SymbolMaster;
@@ -15,19 +14,11 @@ export class SkySymbolMaster extends SkyBaseGroup<SketchFormat.SymbolMaster> {
   }
 }
 
-// 如何进行 overrides?
-// 应该放在 model 里， 而且放在同一个 refModel 中是不行的
-// 不同的 instance override 后，children layer 身上 get 到的内容是不一样的。
-// 比较简单的方法是，在 refModel 上 copy 一遍所有的 children，并且再尝试 overrides。
-
-// 是否有种更高效的方式呢？ 因为现在这样的话，master 一更新，所有的 instance model 都要更新。
-// instance model 确实又要表现各不相同的特性
-// 能不能实现个 proxy 呢？简单的包裹一层，各种只要没有被 override 就能够透传过去就好。
-
 // Todo
 // 获取 refModel、_layers 都太过于依赖恰当的时机。
 // 这让流程变得过于难以理解
 // 确保一个 field 只在一个简单确定的时机能够被 get 到。
+// 使用 proxy 似乎不是个好点子，写好测试后考虑重构下。
 
 // helper 能够更方便的使用 override values
 class OverrideValues {
@@ -99,7 +90,7 @@ class OverrideValues {
         // 内部引用 symbol 被 tint
         case 'fillColor':
           // 这个 info.value 确实是 color，看来 sketch 的类型定义有点问题
-          this.subTint.set(id, new SkyColor().fromJson((info.value as any) as SketchFormat.Color));
+          this.subTint.set(id, new SkyColor().fromJson(info.value as any as SketchFormat.Color));
           break;
       }
     });
@@ -118,8 +109,6 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
 
   isProxy = false;
 
-  // private parentInstance?: SkySymbolInstance;
-
   // 可以是 undefined，这种情况下不现实
   // override 可以吧 symbolId 设置成空字符串，实现隐藏的效果。
   get refModel() {
@@ -132,7 +121,6 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
    * render 的时候延迟 get
    * instance 创建的时候， refModel 还没创建好
    *
-   *
    * instance 也可以在 master 中
    * 所以，可能还是要被 proxy，在被 proxy 之后，调用 wrapLayers 可能就有问题了
    *
@@ -144,9 +132,9 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
     if (this.isProxy) return this.refModel?.layers || [];
 
     if (this._layers === undefined) {
-      this.wrapLayers();
+      this._layers = this.wrapLayers();
     }
-    return this._layers!;
+    return this._layers;
   }
 
   // get rootInstance() {
@@ -162,15 +150,13 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
   }
 
   private wrapLayers() {
-    this._layers = [];
+    const ret = [] as SkyBaseGroup['layers'];
 
     // instance 下的 instance 继承上层传递下来的 overrides
-
-    // Todo， 移动到 proxy 中
-
     this.refModel?.layers.forEach((layer) => {
-      this._layers!.push(new Proxy(layer, new LayerProxyHandler(layer, this)));
+      ret.push(new Proxy(layer, new LayerProxyHandler(layer, this)));
     });
+    return ret;
   }
 
   _fromJson(data: SketchFormat.SymbolInstance) {
@@ -187,15 +173,6 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
 
     this.overrideValues = data.overrideValues ?? this.overrideValues;
   }
-
-  // private lastBuildOverrides?: SketchFormat.OverrideValue[];
-
-  // 又是为了延迟， 在 proxy 中会覆盖这个 overrideValues
-  // private ensureBuildOverrides() {
-  //   if (this.overrideValues === this.lastBuildOverrides) return;
-  //   this.buildOverrides();
-  //   this.lastBuildOverrides = this.overrideValues;
-  // }
 
   get overrideValuesHelper() {
     return OverrideValues.getInstance(this.overrideValues);

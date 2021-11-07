@@ -1,6 +1,7 @@
 <template>
   <nav class="nav">
     <NavButton @click="pick"><FileOpenIcon /></NavButton>
+    <slot />
     <div :style="paddingStyle"></div>
     <p class="doc-title">{{ title }}</p>
 

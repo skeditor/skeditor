@@ -9,6 +9,9 @@ export class SkyModel {
   zipFile!: JSZip;
   data!: SketchFormat.Document;
 
+  metaData?: SketchFormat.Meta;
+  userData = {};
+
   pages: SkyPage[] = [];
 
   private symbolRegistry = new Map<string, SkySymbolMaster>();
@@ -30,14 +33,28 @@ export class SkyModel {
 
     const docJson = await this.readJsonFile(zipFile, 'document.json');
 
-    // Todo init assets
-    // this.doc = new SkyDocument(this, docJson);
-    // await this.doc.init();
-
     this.data = docJson;
+    try {
+      this.metaData = await this.readJsonFile(zipFile, 'meta.json');
+      this.userData = await this.readJsonFile(zipFile, 'user.json');
+    } catch (err) {
+      console.error('Bad file structure', err);
+    }
+
+    if (!this.isSupportedVersion) return;
+
     this.collectSymbols();
     this.collectStyles();
     await this.initPages();
+  }
+
+  // Todo
+  get isSupportedVersion() {
+    return this.metaData && this.metaData.compatibilityVersion >= 99;
+  }
+
+  get appInfo() {
+    return `${this.metaData?.app}@${this.metaData?.appVersion}`;
   }
 
   // 这里初始化 foreignSymbol， 页面内的 symbol 就在页面的初始化过程中收集
@@ -89,10 +106,17 @@ export class SkyModel {
   }
 
   async readImgFile(filename: string) {
+    if (!/\.\w+$/.test(filename)) {
+      filename = `${filename}.png`;
+    }
     if (this.imageCache[filename]) return this.imageCache[filename];
+    const file = this.zipFile.file(filename);
+    if (!file) {
+      console.error(`image not exist: >>>${filename}<<<`);
+      return undefined;
+    }
+    const blob = await file.async('blob');
 
-    const blob = await this.zipFile.file(filename)?.async('blob');
-    invariant(blob, `${filename} not exist!`);
     const buffer = await blob.arrayBuffer();
 
     const skImg = sk.CanvasKit.MakeImageFromEncoded(buffer);

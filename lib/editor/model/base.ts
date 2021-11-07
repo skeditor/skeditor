@@ -1,4 +1,4 @@
-import { SkyModel, SketchFormat, SkySymbolMaster, SkySymbolInstance } from '.';
+import { SkyModel, SkySymbolMaster, SkySymbolInstance, SketchFormat } from '.';
 import { Rect } from '../base/rect';
 import { Point } from '../base/point';
 import sk from '../util/canvaskit';
@@ -465,8 +465,10 @@ export class SkyFile extends SkyBaseObject<SketchFormat.FileRef | SketchFormat.D
   fromJson(data: SketchFormat.FileRef | SketchFormat.DataRef) {
     if (data._class === SketchFormat.ClassValue.MSJSONFileReference) {
       this.ctx.readImgFile(data._ref).then((skImage) => {
-        this.skImage = skImage;
-        this.ctx.changed$.next();
+        if (this.skImage !== skImage) {
+          this.skImage = skImage;
+          this.ctx.changed$.next();
+        }
       });
     } else if (data._class === SketchFormat.ClassValue.MSJSONOriginalDataReference) {
       console.log('!!!!!! Todo');
@@ -502,7 +504,8 @@ export class SkyText extends SkyBaseLayer<SketchFormat.Text> {
 
   _fromJson(data: SketchFormat.Text) {
     this._attributedString = {
-      string: data.attributedString.string,
+      // string 在老版本可能为空, 在 model 中应该保证数据类型准确。
+      string: data.attributedString.string || '',
       attributes:
         data.attributedString.attributes?.map((attr) => {
           const color = new SkyColor();
@@ -940,9 +943,20 @@ export class SkyTextStyle extends SkyBaseObject<SketchFormat.TextStyle> {
   verticalAlignment = SketchFormat.TextVerticalAlignment.Top;
   encodedAttributes: SketchFormat.TextStyle['encodedAttributes'] = {} as any;
 
+  readonly defaultFontAttribute = {
+    _class: SketchFormat.ClassValue.FontDescriptor as any,
+    attributes: {
+      name: 'Roboto',
+      size: 12,
+    },
+  };
+
   fromJson(data: SketchFormat.TextStyle) {
     this.verticalAlignment = data.verticalAlignment;
     Object.assign(this.encodedAttributes, data.encodedAttributes);
+    if (!this.encodedAttributes.MSAttributedStringFontAttribute) {
+      this.encodedAttributes.MSAttributedStringFontAttribute = this.defaultFontAttribute;
+    }
     return this;
   }
 }
