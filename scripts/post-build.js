@@ -3,6 +3,7 @@ const path = require('path');
 const cp = require('child_process');
 const fs = require('fs');
 const template = require('lodash.template');
+require('dotenv').config();
 
 const root = path.resolve(__dirname, '..');
 const outputDir = path.join(root, '.output');

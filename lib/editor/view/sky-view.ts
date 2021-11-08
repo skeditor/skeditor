@@ -16,6 +16,7 @@ import { Observable, Subject, merge, BehaviorSubject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { RulerThickness } from './const';
 import { Services } from './services';
+import { formatBytes } from '../util/misc';
 
 const DebugPrintTree = false;
 const DebugRenderCost = false;
@@ -98,6 +99,9 @@ export class SkyView extends Disposable {
 
     const skyView = new SkyView(model, foreignEl);
     skyView.fontMgr = fontMgr;
+    if (process.env.NODE_ENV === 'development') {
+      (window as any).skyView = skyView;
+    }
     return skyView;
   }
 
@@ -129,6 +133,12 @@ export class SkyView extends Disposable {
     this.canvasEl = document.createElement('canvas');
     this.canvasEl.style.display = 'block';
     this.grContext = sk.CanvasKit.MakeGrContext(sk.CanvasKit.GetWebGLContext(this.canvasEl));
+    this.canvasEl.addEventListener('webglcontextlost', () => {
+      console.log('webglcontextlost');
+    });
+    this.canvasEl.addEventListener('webglcontextrestored', () => {
+      console.log('webglcontextrestored');
+    });
   }
 
   private attachParentNode(el: HTMLElement) {
@@ -199,6 +209,12 @@ export class SkyView extends Disposable {
     this.skSurface = surface;
     this.skCanvas = this.skSurface.getCanvas();
     invariant(this.skCanvas, 'Cant create sk canvas');
+  }
+
+  get debugResourceUsage() {
+    return `${formatBytes(this.grContext.getResourceCacheUsageBytes())}/${formatBytes(
+      this.grContext.getResourceCacheLimitBytes()
+    )}`;
   }
 
   makeOffscreenSurface(width: number, height: number) {

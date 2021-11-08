@@ -3,7 +3,7 @@
     <NavButton @click="pick"><FileOpenIcon /></NavButton>
     <slot />
     <div :style="paddingStyle"></div>
-    <p class="doc-title">{{ title }}</p>
+    <p class="doc-title text-overflow">{{ title }}</p>
 
     <NavButton @click="onExportSelection"><SlicingIcon /></NavButton>
     <NavButton @click="onScaleDown"><ScaleDownIcon /></NavButton>

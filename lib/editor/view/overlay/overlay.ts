@@ -96,6 +96,7 @@ export class OverlayView extends SkyBaseView {
 
     this.hoverOverlay?.render();
     this.selectionView?.render();
+    skCanvas.restore();
   }
 
   renderSelf() {
