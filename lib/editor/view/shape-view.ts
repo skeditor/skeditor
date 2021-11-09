@@ -693,23 +693,27 @@ export class PathPainter {
       // 在 inner shadow 的情况下，sketch 不需要使用计算出来的 shadowPath, figma 则还是会使用和 outer shadow 一致的 shadowPath.
       // 此处跟 sketch 保持一致，虽然我觉得 figma 的做法更好。
 
-      actualShadowPath = this.path;
+      actualShadowPath = this.path.copy();
+      actualShadowPath.setFillType(sk.CanvasKit.FillType.InverseEvenOdd);
 
-      // shadow path 取反
-      const outsidePath = new sk.CanvasKit.Path();
-      outsidePath.addRect(
-        sk.CanvasKit.XYWHRect(
-          -PathPainter.MaxShadowSize,
-          -PathPainter.MaxShadowSize,
-          PathPainter.MaxShadowSize * 2,
-          PathPainter.MaxShadowSize * 2
-        )
-      );
-      outsidePath.op(actualShadowPath, sk.CanvasKit.PathOp.Difference);
-      actualShadowPath = outsidePath;
+      // inverseEvenOdd 类型的 path 设置了 maskFilter 后，skia 做了优化限制了大小
+      // 需要添加点内容，扩充下区域
+      if (shadow.offsetX || shadow.offsetY) {
+        const bounds = Rect.fromSk(this.path.getBounds());
+        const x =
+          shadow.offsetX > 0
+            ? bounds.x - shadow.offsetX - shadow.blurRadius
+            : bounds.right - shadow.offsetX + shadow.blurRadius;
+        const y =
+          shadow.offsetY > 0
+            ? bounds.y - shadow.offsetY - shadow.blurRadius
+            : bounds.bottom - shadow.offsetY + shadow.blurRadius;
+
+        actualShadowPath.addRect(sk.CanvasKit.XYWHRect(x, y, 1, 1));
+      }
 
       if (shadow.spread) {
-        const expandPath = actualShadowPath.copy().stroke({ width: shadow.spread * 2 });
+        const expandPath = this.path.copy().stroke({ width: shadow.spread * 2 });
         expandPath?.op(actualShadowPath, sk.CanvasKit.PathOp.Union);
         actualShadowPath = expandPath;
       }
