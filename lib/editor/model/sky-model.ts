@@ -3,8 +3,9 @@ import JSZip from 'jszip';
 import invariant from 'ts-invariant';
 import { Subject } from 'rxjs';
 import sk from '../util/canvaskit';
+import { Disposable } from '../base';
 
-export class SkyModel {
+export class SkyModel extends Disposable {
   static currentContext: SkyModel;
   zipFile!: JSZip;
   data!: SketchFormat.Document;
@@ -21,9 +22,10 @@ export class SkyModel {
 
   changed$ = new Subject();
 
-  imageCache: { [k: string]: SkImage } = {};
+  private imageCache = new Map<string, SkImage>();
 
   constructor() {
+    super();
     SkyModel.currentContext = this;
   }
 
@@ -109,7 +111,7 @@ export class SkyModel {
     if (!/\.\w+$/.test(filename)) {
       filename = `${filename}.png`;
     }
-    if (this.imageCache[filename]) return this.imageCache[filename];
+    if (this.imageCache.has(filename)) return this.imageCache.get(filename);
     const file = this.zipFile.file(filename);
     if (!file) {
       console.error(`image not exist: >>>${filename}<<<`);
@@ -121,16 +123,19 @@ export class SkyModel {
 
     const skImg = sk.CanvasKit.MakeImageFromEncoded(buffer);
     if (skImg) {
-      this.imageCache[filename] = skImg;
+      this.imageCache.set(filename, skImg);
     } else {
       console.error('Make image failed: ', filename);
     }
-    return this.imageCache[filename];
-
-    // return [buffer, URL.createObjectURL(blob)] as [ArrayBuffer, string];
+    return this.imageCache.get(filename);
   }
 
   async readPageFileRefJson(fileRef: SketchFormat.FileRef) {
     return await this.readJsonFile(this.zipFile, fileRef._ref + '.json');
+  }
+
+  dispose() {
+    super.dispose();
+    this.imageCache.clear();
   }
 }

@@ -30,18 +30,22 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     this.bgColor = sk.CanvasKit.parseColorString('#F9F9F9');
 
     this.zoomState = new ZoomState();
-    this.initController();
 
     if (location.search.includes('tile=0')) {
       this.enableTile = false;
     }
 
     this.tileManager = new TileManager(this);
+
+    this.initController();
   }
 
   private initController() {
     // todo, add to dispose
-    this.controller = new ZoomController(this.ctx.canvasEl, this.zoomState);
+    this.ctx.canvasEl$.subscribe((el) => {
+      this.tileManager.clearAll();
+      this.controller = new ZoomController(el!, this.zoomState);
+    });
 
     this.zoomState.changed$.subscribe(() => {
       this._transformDirty = true;

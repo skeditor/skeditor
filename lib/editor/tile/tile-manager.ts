@@ -106,6 +106,10 @@ export class TileManager {
     }
   }
 
+  clearAll() {
+    this.caches.clear();
+  }
+
   private async scheduleWork() {
     let jobStart = Date.now();
 
@@ -149,6 +153,7 @@ export class TileManager {
     const ctx = this.ctx;
 
     const surface = ctx.makeOffscreenSurface(Tile.width, Tile.height);
+    if (!surface) return;
 
     const canvas = surface.getCanvas();
 

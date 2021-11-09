@@ -59,12 +59,12 @@ class PageState {
 
 export class SkyView extends Disposable {
   static currentContext: SkyView;
-  canvasEl!: HTMLCanvasElement;
+  canvasEl$ = new BehaviorSubject<HTMLCanvasElement | undefined>(undefined);
   grContext!: SkGrDirectContext;
   pageView?: SkyPageView;
   overlayView: OverlayView;
 
-  skSurface!: SkSurface;
+  skSurface?: SkSurface;
   skCanvas!: SkCanvas;
   fontMgr!: SkFontMgr;
 
@@ -112,6 +112,7 @@ export class SkyView extends Disposable {
     this.createCanvasEl();
 
     this.attachParentNode(foreignEl);
+    this.startTick();
 
     this.overlayView = new OverlayView();
     this.services = new Services(this);
@@ -130,25 +131,29 @@ export class SkyView extends Disposable {
    * width 和 style.width 都要手动控制以保持一致, 才能不变形。
    */
   private createCanvasEl() {
-    this.canvasEl = document.createElement('canvas');
-    this.canvasEl.style.display = 'block';
-    this.grContext = sk.CanvasKit.MakeGrContext(sk.CanvasKit.GetWebGLContext(this.canvasEl));
-    this.canvasEl.addEventListener('webglcontextlost', () => {
+    const canvasEl = document.createElement('canvas');
+    canvasEl.style.display = 'block';
+    this.grContext = sk.CanvasKit.MakeGrContext(sk.CanvasKit.GetWebGLContext(canvasEl));
+
+    canvasEl.addEventListener('webglcontextlost', () => {
       console.log('webglcontextlost');
+      this.forceRestoreWebglContext();
     });
-    this.canvasEl.addEventListener('webglcontextrestored', () => {
+    canvasEl.addEventListener('webglcontextrestored', () => {
       console.log('webglcontextrestored');
     });
+    this.canvasEl$.next(canvasEl);
   }
 
   private attachParentNode(el: HTMLElement) {
-    invariant(!this.canvasEl.parentElement, 'Should not attach again!');
-    el.appendChild(this.canvasEl);
+    const canvasEl = this.canvasEl$.value;
+    invariant(canvasEl && !canvasEl.parentElement, 'Should not attach again!');
+    el.appendChild(canvasEl);
     this.doResize();
 
     this._disposables.push(
       new Observable((sub) => {
-        const ro = new ResizeObserver((entries) => {
+        const ro = new ResizeObserver(() => {
           sub.next();
         });
         ro.observe(el);
@@ -159,35 +164,38 @@ export class SkyView extends Disposable {
           this.doResize();
         })
     );
+  }
 
+  startTick() {
     const handler = () => {
       if (this._disposed) return;
       this.render();
-      // interesting. 相对于 requestAnimationFrame, setTimeout cpu 消耗更少
       setTimeout(handler, 16);
     };
     setTimeout(handler, 16);
   }
 
   // canvasEl 保持和 parentNode 一样大
-  doResize() {
+  doResize(force = false) {
     const bounds = this.foreignEl.getBoundingClientRect();
-    if (this.frame.width === bounds.width && this.frame.height === bounds.height) {
+    if (!force && this.frame.width === bounds.width && this.frame.height === bounds.height) {
       return;
     }
+
+    const canvasEl = this.canvasEl$.value!;
 
     this.frame.width = bounds.width;
     this.frame.height = bounds.height;
     this.dpi = window.devicePixelRatio;
 
-    this.canvasEl.style.width = `${bounds.width}px`;
-    this.canvasEl.style.height = `${bounds.height}px`;
+    canvasEl.style.width = `${bounds.width}px`;
+    canvasEl.style.height = `${bounds.height}px`;
 
     const canvasWidth = this.frame.width * this.dpi;
     const canvasHeight = this.frame.height * this.dpi;
 
-    this.canvasEl.width = canvasWidth;
-    this.canvasEl.height = canvasHeight;
+    canvasEl.width = canvasWidth;
+    canvasEl.height = canvasHeight;
 
     this.markDirty();
   }
@@ -198,17 +206,32 @@ export class SkyView extends Disposable {
    */
   createSkSurfaceAndCanvas() {
     this.skSurface?.delete();
+    this.skSurface = undefined;
+    const canvasEl = this.canvasEl$.value!;
     const surface = sk.CanvasKit.MakeOnScreenGLSurface(
       this.grContext,
-      this.canvasEl.width,
-      this.canvasEl.height,
+      canvasEl.width,
+      canvasEl.height,
       sk.CanvasKit.ColorSpace.SRGB
     );
-
-    invariant(surface, 'Cant create sk surface');
+    if (!surface) return;
     this.skSurface = surface;
+
     this.skCanvas = this.skSurface.getCanvas();
     invariant(this.skCanvas, 'Cant create sk canvas');
+  }
+
+  forceRestoreWebglContext() {
+    const canvasEl = this.canvasEl$.value!;
+    canvasEl.parentNode?.removeChild(canvasEl);
+    if (this.grContext) {
+      this.grContext.delete();
+    }
+    this.skSurface?.delete();
+    this.skSurface = undefined;
+    this.createCanvasEl();
+    this.foreignEl.appendChild(this.canvasEl$.value!);
+    this.doResize(true);
   }
 
   get debugResourceUsage() {
@@ -218,6 +241,7 @@ export class SkyView extends Disposable {
   }
 
   makeOffscreenSurface(width: number, height: number) {
+    if (!this.skSurface) return undefined;
     return this.skSurface.makeSurface({
       ...this.skSurface.imageInfo(),
       width,
@@ -294,6 +318,7 @@ export class SkyView extends Disposable {
     if (!this.dirty) return;
 
     this.createSkSurfaceAndCanvas();
+    if (!this.skSurface) return;
     this.skCanvas.clear(sk.CanvasKit.TRANSPARENT);
     if (this.pageView) {
       const start = Date.now();
@@ -335,9 +360,13 @@ export class SkyView extends Disposable {
 
   dispose() {
     super.dispose();
-    // this.skSurface?.delete();
-    if (this.canvasEl.parentNode) {
-      this.canvasEl.parentNode.removeChild(this.canvasEl);
+    this.grContext?.delete();
+    this.skSurface?.delete();
+    this.pageView = undefined;
+    this.pageState.reset();
+    const canvasEl = this.canvasEl$.value;
+    if (canvasEl && canvasEl.parentNode) {
+      canvasEl.parentNode.removeChild(canvasEl);
     }
   }
 
@@ -404,13 +433,17 @@ export class SkyView extends Disposable {
     }
 
     const img = this.renderView(view, 3);
-    this.getImgFromSkImage(img);
+    if (img) {
+      this.getImgFromSkImage(img);
+    }
   }
 
   renderView(view: SkyBaseLayerView, scale: number) {
     const frame = view.renderFrame;
 
     const surface = this.makeOffscreenSurface(frame.width * scale, frame.height * scale);
+    invariant(surface, 'create Surface Error');
+
     const canvas = surface.getCanvas();
     this.pushCanvas(canvas);
     canvas.scale(scale, scale);
@@ -428,6 +461,7 @@ export class SkyView extends Disposable {
   }
 
   getImgFromSkImage(image: SkImage) {
+    invariant(this.skSurface, 'No sk surface ');
     const width = image.width();
     const height = image.height();
 

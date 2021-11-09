@@ -11,6 +11,7 @@ import {
   SkyBorderOptions,
   SkyGradient,
   SkyPatternFillType,
+  SkyGraphicsContextSettings,
 } from '../model';
 import { Rect, degreeToRadian } from '../base';
 import sk, { SkCanvas, SkPath, SkShader, SkPaint } from '../util/canvaskit';
@@ -430,17 +431,7 @@ export class PathPainter {
       this.applyImageFill(paint, fill, frame);
     }
 
-    // 处理公用信息
-    const { contextSettings } = fill;
-    if (contextSettings) {
-      const { opacity, blendMode } = contextSettings;
-      if (opacity !== 1) {
-        paint.setAlphaf(opacity);
-      }
-      if (blendMode !== sk.CanvasKit.BlendMode.Src) {
-        paint.setBlendMode(blendMode);
-      }
-    }
+    this.applyContextSettings(paint, fill.contextSettings);
 
     this.paintFnArr.push(() => {
       const canvas = this.skCanvas;
@@ -477,12 +468,11 @@ export class PathPainter {
 
     paint.setStyle(sk.CanvasKit.PaintStyle.Stroke);
 
-    paint.setAntiAlias(true);
-
     const isCenter = border.position === SkyBorderPosition.Center;
 
     paint.setStrokeWidth(border.thickness * (isCenter ? 1 : 2));
-    this.applyBorderOptions(borderOptions, paint);
+    this.applyBorderOptions(paint, borderOptions);
+    this.applyContextSettings(paint, border.contextSettings);
 
     this.paintFnArr.push(() => {
       const canvas = this.skCanvas;
@@ -491,7 +481,7 @@ export class PathPainter {
         canvas.clipPath(
           path,
           border.position === SkyBorderPosition.Inside ? sk.CanvasKit.ClipOp.Intersect : sk.CanvasKit.ClipOp.Difference,
-          true
+          false
         );
       }
 
@@ -554,7 +544,7 @@ export class PathPainter {
     }
   }
 
-  applyBorderOptions(option: SkyBorderOptions | undefined, paint: SkPaint) {
+  applyBorderOptions(paint: SkPaint, option?: SkyBorderOptions) {
     if (!option?.isEnabled) return;
     if (option.dashPattern.length) {
       const dashEffect = sk.CanvasKit.PathEffect.MakeDash(option.dashPattern);
@@ -562,6 +552,18 @@ export class PathPainter {
     }
     paint.setStrokeCap(option.lineCapStyle);
     paint.setStrokeJoin(option.lineJoinStyle);
+  }
+
+  applyContextSettings(paint: SkPaint, contextSettings?: SkyGraphicsContextSettings) {
+    if (contextSettings) {
+      const { opacity, blendMode } = contextSettings;
+      if (opacity !== 1) {
+        paint.setAlphaf(opacity);
+      }
+      if (blendMode !== sk.CanvasKit.BlendMode.Src) {
+        paint.setBlendMode(blendMode);
+      }
+    }
   }
 
   applyImageFill(paint: SkPaint, fill: SkyFill, frame: Rect) {
@@ -686,8 +688,6 @@ export class PathPainter {
     let actualShadowPath: SkPath | null | undefined;
     let clipPath: SkPath | null | undefined;
 
-    const { skCanvas } = this;
-
     if (shadow.isInner) {
       if (!this.path) return;
       // 在 inner shadow 的情况下，sketch 不需要使用计算出来的 shadowPath, figma 则还是会使用和 outer shadow 一致的 shadowPath.
@@ -736,6 +736,7 @@ export class PathPainter {
 
     const paint = new sk.CanvasKit.Paint();
     paint.setColor(shadow.color.skColor);
+    this.applyContextSettings(paint, shadow.contextSettings);
     const sigma = convertRadiusToSigma(shadow.blurRadius);
     paint.setMaskFilter(sk.CanvasKit.MaskFilter.MakeBlur(sk.CanvasKit.BlurStyle.Normal, sigma, true));
 
@@ -744,9 +745,9 @@ export class PathPainter {
       skCanvas.save();
       if (clipPath) {
         if (shadow.isInner) {
-          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Intersect, true);
+          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Intersect, false);
         } else {
-          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Difference, true);
+          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Difference, false);
         }
       }
 

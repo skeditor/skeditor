@@ -127,7 +127,8 @@ export class EditorState {
       return;
     }
 
-    this.viewRef.value?.dispose();
+    this.view?.dispose();
+    this.model?.dispose();
     this.reset();
 
     const view = await SkyView.create(model, el);
@@ -136,6 +137,14 @@ export class EditorState {
     this.modelRef.value = model;
     this.filename = filename;
     this.initBinding(view);
+  }
+
+  dispose() {
+    this.view?.dispose();
+    this.model?.dispose();
+    this.viewRef.value = undefined;
+    this.modelRef.value = undefined;
+    this.reset();
   }
 
   initBinding(view: SkyView) {

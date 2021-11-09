@@ -781,7 +781,7 @@ export class SkyBorder extends SkyTintColorObject<SketchFormat.Border> {
   thickness = 1;
   _gradient?: SkyGradient;
 
-  // contextSettings: GraphicsContextSettings;
+  contextSettings = new SkyGraphicsContextSettings();
 
   fromJson(data: SketchFormat.Border) {
     this.isEnabled = data.isEnabled;
@@ -796,6 +796,10 @@ export class SkyBorder extends SkyTintColorObject<SketchFormat.Border> {
 
     if (data.gradient) {
       this._gradient = new SkyGradient().fromJson(data.gradient);
+    }
+
+    if (data.contextSettings) {
+      this.contextSettings.fromJson(data.contextSettings);
     }
 
     return this;

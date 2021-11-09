@@ -19,33 +19,36 @@ export class PointerController extends Disposable {
   constructor(private view: SkyView) {
     super();
 
-    this._disposables.push(
-      fromEvent(view.canvasEl, 'contextmenu').subscribe((event) => {
-        const mEvent = event as MouseEvent;
-        // ctrl 按左键，触发 context menu
-        if (mEvent.button === 0) {
-          event.preventDefault();
-          this.onClick(event);
-        }
-      })
-    );
-
-    this._disposables.push(
-      fromEvent(view.canvasEl, 'mousemove')
-        .pipe(throttleTime(100))
-        .subscribe((event) => {
-          this.onHover(event as MouseEvent);
+    view.canvasEl$.subscribe((el) => {
+      const canvasEl = el!;
+      this._disposables.push(
+        fromEvent(canvasEl, 'contextmenu').subscribe((event) => {
+          const mEvent = event as MouseEvent;
+          // ctrl 按左键，触发 context menu
+          if (mEvent.button === 0) {
+            event.preventDefault();
+            this.onClick(event);
+          }
         })
-    );
+      );
 
-    // this._disposables.push(
-    //   fromEvent(view.canvasEl, 'mousedown').subscribe((event) => {
-    //     console.log('>>> mouse down');
-    //     event.preventDefault();
-    //   })
-    // );
+      this._disposables.push(
+        fromEvent(canvasEl, 'mousemove')
+          .pipe(throttleTime(100))
+          .subscribe((event) => {
+            this.onHover(event as MouseEvent);
+          })
+      );
 
-    this._disposables.push(fromEvent(view.canvasEl, 'click').subscribe(this.onClick));
+      // this._disposables.push(
+      //   fromEvent(view.canvasEl, 'mousedown').subscribe((event) => {
+      //     console.log('>>> mouse down');
+      //     event.preventDefault();
+      //   })
+      // );
+
+      this._disposables.push(fromEvent(canvasEl, 'click').subscribe(this.onClick));
+    });
   }
 
   private isDeepKey(event: MouseEvent) {

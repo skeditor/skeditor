@@ -136,11 +136,14 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
         // case ClassValue.Triangle:
         // case ClassValue.Oval:
         case ClassValue.ShapeLike:
-          return this.addChild(new SkyShapePathLikeView(childModel));
+          this.addChild(new SkyShapePathLikeView(childModel));
+          return;
         case ClassValue.Bitmap:
-          return this.addChild(new SkyBitmapView(childModel));
+          this.addChild(new SkyBitmapView(childModel));
+          return;
         case ClassValue.Text:
-          return this.addChild(new SkyTextView(childModel));
+          this.addChild(new SkyTextView(childModel));
+          return;
         case ClassValue.SymbolInstance:
           return this.addChild(new SkySymbolInstanceView(childModel));
         case ClassValue.SymbolMaster:
