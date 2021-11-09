@@ -13,7 +13,7 @@ import {
   SkyPatternFillType,
   SkyGraphicsContextSettings,
 } from '../model';
-import { Rect, degreeToRadian } from '../base';
+import { Rect, degreeToRadian, Disposable } from '../base';
 import sk, { SkCanvas, SkPath, SkShader, SkPaint } from '../util/canvaskit';
 import { convertRadiusToSigma } from '../util/sketch-to-skia';
 import { createPath } from '../util/path';
@@ -188,7 +188,7 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
   _tryClip() {
     const { skCanvas } = this.ctx;
     if (this.path) {
-      skCanvas.clipPath(this.path, sk.CanvasKit.ClipOp.Intersect, false);
+      skCanvas.clipPath(this.path, sk.CanvasKit.ClipOp.Intersect, true);
     }
   }
 }
@@ -240,7 +240,7 @@ export class SkyShapePathLikeView extends SkyBasePathView<SkyBaseShapeLike> {
   }
 }
 
-export class PathPainter {
+export class PathPainter extends Disposable {
   private paintFnArr = [] as (() => void)[];
   private shadowPath?: SkPath | null;
 
@@ -248,8 +248,9 @@ export class PathPainter {
   private hasFill = false;
 
   constructor(private view: SkyBasePathView | SkyTextView) {
+    super();
     this.calcShadowPath();
-    this.buildPaint();
+    this.calcPaintInfo();
   }
 
   get skCanvas() {
@@ -349,6 +350,7 @@ export class PathPainter {
           if (insideBorder && outsideBorder) {
             insideBorder.op(outsideBorder, sk.CanvasKit.PathOp.Union);
             this.shadowPath = insideBorder;
+            outsideBorder.delete();
           }
         }
       } else if (inside !== 0) {
@@ -369,7 +371,7 @@ export class PathPainter {
     }
   }
 
-  buildPaint() {
+  private calcPaintInfo() {
     const { skCanvas, path, frame, style } = this;
 
     if (!path) {
@@ -418,11 +420,9 @@ export class PathPainter {
     }
   }
 
-  paintFill(canvas: SkCanvas, path: SkPath, fill: SkyFill, frame: Rect) {
+  private paintFill(canvas: SkCanvas, path: SkPath, fill: SkyFill, frame: Rect) {
     const paint = new sk.CanvasKit.Paint();
-    // if (this.view.id === 26) {
-    //   debugger;
-    // }
+
     if (fill.fillType === SkyFillType.Color) {
       paint.setColor(fill.color.skColor);
     } else if (fill.fillType === SkyFillType.Gradient && fill.gradient) {
@@ -434,10 +434,12 @@ export class PathPainter {
     this.applyContextSettings(paint, fill.contextSettings);
 
     this.paintFnArr.push(() => {
-      const canvas = this.skCanvas;
-      canvas.drawPath(path, paint);
+      const skCanvas = this.skCanvas;
+      skCanvas.drawPath(path, paint);
     });
-
+    this._disposables.push(() => {
+      paint.delete();
+    });
     return;
   }
 
@@ -448,7 +450,7 @@ export class PathPainter {
    * @param border
    * @param frame
    */
-  paintBorder(canvas: SkCanvas, path: SkPath, border: SkyBorder, frame: Rect) {
+  private paintBorder(canvas: SkCanvas, path: SkPath, border: SkyBorder, frame: Rect) {
     // skia 的 stroke 只能以居中的方式进行绘制
     // 如果 border 在 center 不需要任何调整
     // 否则将 strokeWidth * 2， 再在绘制的时候应用 clip
@@ -475,25 +477,129 @@ export class PathPainter {
     this.applyContextSettings(paint, border.contextSettings);
 
     this.paintFnArr.push(() => {
-      const canvas = this.skCanvas;
+      const skCanvas = this.skCanvas;
       if (!isCenter) {
-        canvas.save();
-        canvas.clipPath(
+        skCanvas.save();
+        skCanvas.clipPath(
           path,
           border.position === SkyBorderPosition.Inside ? sk.CanvasKit.ClipOp.Intersect : sk.CanvasKit.ClipOp.Difference,
-          false
+          true
         );
       }
-
-      canvas.drawPath(path, paint);
-
+      skCanvas.drawPath(path, paint);
       if (!isCenter) {
-        canvas.restore();
+        skCanvas.restore();
       }
+    });
+    this._disposables.push(() => {
+      paint.delete();
     });
   }
 
-  applyGradient(paint: SkPaint, gradient: SkyGradient, frame: Rect) {
+  /**
+   * shadow 的问题
+   * 0 inner shadow 和 outer shadow 都要设置 clip
+   * 1 [*] path，应该是结合了 border 和 fill 的。
+   * 2 [*] path 在没有 fill 的时候，只有 border 。 只以 border path 为准。
+   * 3 [*] out shadow 在 stroke/fill 之前。 inner 在之后，并且要 clip
+   * 4 [*] outer spread 要基于border/fill合并后的path做膨胀。 inner path 可以继续用原始 fill 的 path。
+   * 5 [*] offset
+   * 6 text image shadow 问题
+   * 7 [*] inner shadow, 只跟原始形状有关，不需要再做计算。(sketch 是这么实现的，但 figma 并不是，我认为 figma 的才是对的)。
+   */
+  private paintShadow(shadow: SkyShadow) {
+    if (shadow.isEmpty) return;
+    // 实际上用于绘制的 shadow path。 this.shadowPath 主要是 outer shadow 用。 inner shadow 直接用 this.path 即可。
+    let actualShadowPath: SkPath | null | undefined;
+    let clipPath: SkPath | null | undefined;
+
+    if (shadow.isInner) {
+      if (!this.path) return;
+      // 在 inner shadow 的情况下，sketch 不需要使用计算出来的 shadowPath, figma 则还是会使用和 outer shadow 一致的 shadowPath.
+      // 此处跟 sketch 保持一致，虽然我觉得 figma 的做法更好。
+
+      actualShadowPath = this.path.copy();
+      actualShadowPath.setFillType(sk.CanvasKit.FillType.InverseEvenOdd);
+
+      // inverseEvenOdd 类型的 path 区域可能无限大。 设置了 maskFilter 后，skia 做了优化限制了大小。
+      // 存在 offset 的时候需要主动添加点内容，以扩充区域
+      if (shadow.offsetX || shadow.offsetY) {
+        const bounds = Rect.fromSk(this.path.getBounds());
+        const x =
+          shadow.offsetX > 0
+            ? bounds.x - shadow.offsetX - shadow.blurRadius - 1
+            : bounds.right - shadow.offsetX + shadow.blurRadius;
+        const y =
+          shadow.offsetY > 0
+            ? bounds.y - shadow.offsetY - shadow.blurRadius - 1
+            : bounds.bottom - shadow.offsetY + shadow.blurRadius;
+
+        actualShadowPath.addRect(sk.CanvasKit.XYWHRect(x, y, 1, 1));
+      }
+
+      if (shadow.spread) {
+        const temp = actualShadowPath;
+        actualShadowPath = this.path.copy().stroke({ width: shadow.spread * 2 });
+        actualShadowPath?.op(temp, sk.CanvasKit.PathOp.Union);
+        temp.delete();
+      }
+
+      clipPath = this.path;
+    }
+
+    if (!shadow.isInner) {
+      if (!this.shadowPath) return;
+      actualShadowPath = this.shadowPath;
+      if (shadow.spread) {
+        // expand
+        const spreadPath = this.shadowPath.copy().stroke({ width: this.hasFill ? shadow.spread * 2 : shadow.spread });
+        spreadPath?.op(this.shadowPath, sk.CanvasKit.PathOp.Union);
+        actualShadowPath = spreadPath;
+      }
+      // outside shadow 在有 fill 的时候需要 clip，这样透明的 fill 背后才会是空白的。
+      if (this.hasFill) {
+        clipPath = this.shadowPath;
+      }
+    }
+
+    if (!actualShadowPath) return;
+
+    const paint = new sk.CanvasKit.Paint();
+    paint.setColor(shadow.color.skColor);
+    this.applyContextSettings(paint, shadow.contextSettings);
+    const sigma = convertRadiusToSigma(shadow.blurRadius);
+    paint.setMaskFilter(sk.CanvasKit.MaskFilter.MakeBlur(sk.CanvasKit.BlurStyle.Normal, sigma, true));
+
+    this.paintFnArr.push(() => {
+      const skCanvas = this.skCanvas;
+      skCanvas.save();
+      if (clipPath) {
+        if (shadow.isInner) {
+          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Intersect, true);
+        } else {
+          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Difference, true);
+        }
+      }
+
+      skCanvas.translate(shadow.offsetX, shadow.offsetY);
+
+      skCanvas.drawPath(actualShadowPath!, paint);
+
+      skCanvas.restore();
+    });
+
+    this._disposables.push(() => {
+      if (actualShadowPath !== this.path && actualShadowPath !== this.shadowPath) {
+        actualShadowPath?.delete();
+      }
+      if (clipPath !== this.path && clipPath !== this.shadowPath) {
+        clipPath?.delete();
+      }
+      paint.delete();
+    });
+  }
+
+  private applyGradient(paint: SkPaint, gradient: SkyGradient, frame: Rect) {
     let shader: SkShader | undefined;
     const fromPoint = gradient.from.scaleNew(frame.width, frame.height);
     const toPoint = gradient.to.scaleNew(frame.width, frame.height);
@@ -544,7 +650,7 @@ export class PathPainter {
     }
   }
 
-  applyBorderOptions(paint: SkPaint, option?: SkyBorderOptions) {
+  private applyBorderOptions(paint: SkPaint, option?: SkyBorderOptions) {
     if (!option?.isEnabled) return;
     if (option.dashPattern.length) {
       const dashEffect = sk.CanvasKit.PathEffect.MakeDash(option.dashPattern);
@@ -554,7 +660,8 @@ export class PathPainter {
     paint.setStrokeJoin(option.lineJoinStyle);
   }
 
-  applyContextSettings(paint: SkPaint, contextSettings?: SkyGraphicsContextSettings) {
+  private applyContextSettings(paint: SkPaint, contextSettings?: SkyGraphicsContextSettings) {
+    paint.setAntiAlias(true);
     if (contextSettings) {
       const { opacity, blendMode } = contextSettings;
       if (opacity !== 1) {
@@ -566,7 +673,7 @@ export class PathPainter {
     }
   }
 
-  applyImageFill(paint: SkPaint, fill: SkyFill, frame: Rect) {
+  private applyImageFill(paint: SkPaint, fill: SkyFill, frame: Rect) {
     const skImg = fill.image?.skImage;
     if (!skImg) {
       return;
@@ -669,97 +776,11 @@ export class PathPainter {
     }
   }
 
-  static readonly MaxShadowSize = 100000;
-
-  /**
-   * shadow 的问题
-   * 0 inner shadow 和 outer shadow 都要设置 clip
-   * 1 [*] path，应该是结合了 border 和 fill 的。
-   * 2 [*] path 在没有 fill 的时候，只有 border 。 只以 border path 为准。
-   * 3 [*] out shadow 在 stroke/fill 之前。 inner 在之后，并且要 clip
-   * 4 [*] outer spread 要基于border/fill合并后的path做膨胀。 inner path 可以继续用原始 fill 的 path。
-   * 5 [*] offset
-   * 6 text image shadow 问题
-   * 7 [*] inner shadow, 只跟原始形状有关，不需要再做计算。(sketch 是这么实现的，但 figma 并不是，我认为 figma 的才是对的)。
-   */
-  paintShadow(shadow: SkyShadow) {
-    if (shadow.isEmpty) return;
-    // 实际上用于绘制的 shadow path。 this.shadowPath 主要是 outer shadow 用。 inner shadow 直接用 this.path 即可。
-    let actualShadowPath: SkPath | null | undefined;
-    let clipPath: SkPath | null | undefined;
-
-    if (shadow.isInner) {
-      if (!this.path) return;
-      // 在 inner shadow 的情况下，sketch 不需要使用计算出来的 shadowPath, figma 则还是会使用和 outer shadow 一致的 shadowPath.
-      // 此处跟 sketch 保持一致，虽然我觉得 figma 的做法更好。
-
-      actualShadowPath = this.path.copy();
-      actualShadowPath.setFillType(sk.CanvasKit.FillType.InverseEvenOdd);
-
-      // inverseEvenOdd 类型的 path 设置了 maskFilter 后，skia 做了优化限制了大小
-      // 需要添加点内容，扩充下区域
-      if (shadow.offsetX || shadow.offsetY) {
-        const bounds = Rect.fromSk(this.path.getBounds());
-        const x =
-          shadow.offsetX > 0
-            ? bounds.x - shadow.offsetX - shadow.blurRadius
-            : bounds.right - shadow.offsetX + shadow.blurRadius;
-        const y =
-          shadow.offsetY > 0
-            ? bounds.y - shadow.offsetY - shadow.blurRadius
-            : bounds.bottom - shadow.offsetY + shadow.blurRadius;
-
-        actualShadowPath.addRect(sk.CanvasKit.XYWHRect(x, y, 1, 1));
-      }
-
-      if (shadow.spread) {
-        const expandPath = this.path.copy().stroke({ width: shadow.spread * 2 });
-        expandPath?.op(actualShadowPath, sk.CanvasKit.PathOp.Union);
-        actualShadowPath = expandPath;
-      }
-
-      clipPath = this.path;
+  dispose() {
+    super.dispose();
+    this.paintFnArr.length = 0;
+    if (this.shadowPath !== this.path) {
+      this.shadowPath?.delete();
     }
-
-    if (!shadow.isInner) {
-      if (!this.shadowPath) return;
-      actualShadowPath = this.shadowPath;
-      if (shadow.spread) {
-        // expand
-        const spreadPath = this.shadowPath.copy().stroke({ width: this.hasFill ? shadow.spread * 2 : shadow.spread });
-        spreadPath?.op(this.shadowPath, sk.CanvasKit.PathOp.Union);
-        actualShadowPath = spreadPath;
-      }
-      // outside shadow 在有 fill 的时候需要 clip，这样透明的 fill 背后才会是空白的。
-      if (this.hasFill) {
-        clipPath = this.shadowPath;
-      }
-    }
-
-    if (!actualShadowPath) return;
-
-    const paint = new sk.CanvasKit.Paint();
-    paint.setColor(shadow.color.skColor);
-    this.applyContextSettings(paint, shadow.contextSettings);
-    const sigma = convertRadiusToSigma(shadow.blurRadius);
-    paint.setMaskFilter(sk.CanvasKit.MaskFilter.MakeBlur(sk.CanvasKit.BlurStyle.Normal, sigma, true));
-
-    this.paintFnArr.push(() => {
-      const skCanvas = this.skCanvas;
-      skCanvas.save();
-      if (clipPath) {
-        if (shadow.isInner) {
-          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Intersect, false);
-        } else {
-          skCanvas.clipPath(clipPath, sk.CanvasKit.ClipOp.Difference, false);
-        }
-      }
-
-      skCanvas.translate(shadow.offsetX, shadow.offsetY);
-
-      skCanvas.drawPath(actualShadowPath!, paint);
-
-      skCanvas.restore();
-    });
   }
 }

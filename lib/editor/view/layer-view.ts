@@ -575,6 +575,11 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     return local.x > 0 && local.y > 0 && local.x < frame.width && local.y < frame.height;
   }
 
+  traverse(fn: (layerView: SkyBaseLayerView) => void) {
+    fn(this);
+    this.children.forEach((child) => child.traverse(fn));
+  }
+
   // 查找光标下最里层的一个 view
   // hover 和 点击的时候逻辑并不通用
   findView(pt: Point) {

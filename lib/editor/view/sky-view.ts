@@ -7,7 +7,8 @@ import sk, {
   SkGrDirectContext,
   SkCanvas,
   SkSurface,
-  SkFontMgr,
+  SkTypefaceFontProvider,
+  getFontProvider,
 } from '../util/canvaskit';
 
 import invariant from 'ts-invariant';
@@ -66,7 +67,7 @@ export class SkyView extends Disposable {
 
   skSurface?: SkSurface;
   skCanvas!: SkCanvas;
-  fontMgr!: SkFontMgr;
+  fontProvider!: SkTypefaceFontProvider;
 
   private dirty = true;
 
@@ -95,10 +96,8 @@ export class SkyView extends Disposable {
   static async create(model: SkyModel, foreignEl: HTMLElement) {
     await CanvaskitPromised;
 
-    const fontMgr = await getFontMgr();
-
     const skyView = new SkyView(model, foreignEl);
-    skyView.fontMgr = fontMgr;
+    skyView.fontProvider = getFontProvider();
     if (process.env.NODE_ENV === 'development') {
       (window as any).skyView = skyView;
     }
@@ -368,6 +367,7 @@ export class SkyView extends Disposable {
     if (canvasEl && canvasEl.parentNode) {
       canvasEl.parentNode.removeChild(canvasEl);
     }
+    this.services.dispose();
   }
 
   debugTexture() {

@@ -43,7 +43,7 @@ export class Ruler extends SkyBoxView {
   }
 
   createPara(text: string) {
-    const builder = sk.CanvasKit.ParagraphBuilder.Make(this._paraStyle, this.ctx.fontMgr);
+    const builder = sk.CanvasKit.ParagraphBuilder.MakeFromFontProvider(this._paraStyle, this.ctx.fontProvider);
     builder.addText(text);
     const para = builder.build();
     para.layout(1e8);

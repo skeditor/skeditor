@@ -56,9 +56,9 @@ export class ArtBoardOverlayView extends SkyBoxView {
 
     const text = this.artBoardView.model.name;
     if (text && actualFrame.width > TitleFontSize * 1.5) {
-      const builder = sk.CanvasKit.ParagraphBuilder.Make(
+      const builder = sk.CanvasKit.ParagraphBuilder.MakeFromFontProvider(
         this.artBoardView.isSymbolMaster ? SymbolTitleStyle : ArtBoardTitleStyle,
-        this.ctx.fontMgr
+        this.ctx.fontProvider
       );
       builder.addText(text);
       const para = builder.build();

@@ -115,6 +115,13 @@ export class SkyPageView extends SkyBaseGroupView<SkyPage> {
     skCanvas.clear(this.bgColor);
   }
 
+  invalidateTiles(immediate: boolean) {
+    this.tileManager.clearAll();
+    if (immediate) {
+      this.tileManager.blockingMode = true;
+    }
+  }
+
   /**
    * page 下实际内容，到渲染出像素坐标系时，发生的实际缩放值
    */

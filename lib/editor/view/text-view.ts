@@ -48,6 +48,11 @@ export class SkyTextView extends SkyBaseLayerView<SkyText> {
     return this.model.hasInnerShadow || this.model.hasComplicatedPaint || this.model.validFillCount > 1;
   }
 
+  invalidatePainter() {
+    this._painter?.dispose();
+    this._painter = undefined;
+  }
+
   _tryClip() {
     const { skCanvas } = this.ctx;
     if (this.path) {
@@ -155,7 +160,6 @@ class TextPainter {
 
   get fontFamilies() {
     return defaultFonts;
-    // return ['Roboto', 'HarmonyOS Sans SC', 'Noto Color Emoji'];
   }
 
   // Line spacing ok
@@ -167,7 +171,7 @@ class TextPainter {
       this.pathPainter.paint();
     } else {
       // 同时有 border 的 fill 的时候要绘制两次
-      // chrome 也是这么做的
+      // chrome 参考
       // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/graphics_context.cc;l=617;
       this.paintWith(this.cachePaintInfo);
       this.paintWith(this.cacheBorderPaintInfo);
@@ -205,7 +209,7 @@ class TextPainter {
   }
 
   private buildPaintInfo(isBorder = false): ParaPaintInfo {
-    const { skCanvas, fontMgr } = this.ctx;
+    const { fontProvider } = this.ctx;
     const { attributedString, style } = this.model;
     const { frame } = this;
     const { string: text, attributes } = attributedString;
@@ -213,9 +217,6 @@ class TextPainter {
     const fgPaint = isBorder ? this.textBorderPaint : this.textPaint;
 
     const paraSpacing = style?.textStyle?.encodedAttributes.paragraphStyle?.paragraphSpacing || 0;
-    // clip
-
-    // skCanvas.clipRect(sk.CanvasKit.XYWHRect(0, 0, frame.width, frame.height), sk.CanvasKit.ClipOp.Intersect, false);
 
     const lines = text.split(/\r\n|\r|\n/);
 
@@ -225,7 +226,7 @@ class TextPainter {
     const paraArr = lines.map((line, idx) => {
       const segs = lineSegs[idx];
       const paraStyle = this.buildParaStyle(style?.textStyle);
-      const builder = sk.CanvasKit.ParagraphBuilder.Make(paraStyle, fontMgr);
+      const builder = sk.CanvasKit.ParagraphBuilder.MakeFromFontProvider(paraStyle, fontProvider);
 
       segs.forEach((seg) => {
         const { length, location, attributes } = seg;
@@ -245,7 +246,11 @@ class TextPainter {
 
       const para = builder.build();
       builder.delete();
-      para.layout(frame.width);
+      if (frame.height / (paraStyle.textStyle?.fontSize || 12) > 2) {
+        para.layout(frame.width);
+      } else {
+        para.layout(10e6);
+      }
       const paraHeight = para.getHeight();
 
       const ret = [para, curY] as [SkParagraph, number];
@@ -317,7 +322,7 @@ class TextPainter {
   // workspace/others/flutter-engine-master/lib/web_ui/lib/src/engine/canvaskit/text.dart
 
   // # 上下均匀的 leading 实现：
-  // heightMultiplier: 1, leading: heightMultiplier - 1,
+  // heightMultiplier: 1, leading: lineHeight/fontSize - 1,
   // sketch 的 leading 是上下均匀分配的，通过这种设置可以实现。
   // 而在 skia 中，设置了 multiplier 的时候，是按照 accent/descent 比例上下添加的。 一般造成上边空间更多。
 
@@ -333,7 +338,8 @@ class TextPainter {
     let heightMultiplier: number | undefined;
     let leadingMultiplier: number | undefined;
 
-    // Todo, 这里的 max lineHeight 和 maxLineHeight 区别在哪？
+    // Todo, 这里的 minLineHeight 和 maxLineHeight 区别在哪？
+    // sketch 未设置 lineHeight 的时候默认 lineHeight 如何计算？
     if (encodedAttributes.paragraphStyle?.maximumLineHeight) {
       heightMultiplier = encodedAttributes.paragraphStyle.maximumLineHeight / fontSize;
       leadingMultiplier = heightMultiplier - 1;
@@ -404,7 +410,13 @@ class TextPainter {
     this._cachePaintInfo?.paraArr.forEach(([para]) => {
       para.delete();
     });
+    this._cacheBorderPaintInfo?.paraArr.forEach(([para]) => {
+      para.delete();
+    });
+    this._path?.delete();
+    this._pathPainter?.dispose();
     this.textPaint?.delete();
+    this.textBorderPaint?.delete();
   }
 }
 

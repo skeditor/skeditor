@@ -14,7 +14,7 @@ import { LruCache } from '../util/lru';
 export class TileManager {
   // Page 首次绘制时不需要通过 raf 分片
   // 完成第一次绘制后设置成 false
-  private blockingMode = true;
+  blockingMode = true;
 
   private pyramid = new CheckerboardPyramid(this);
 

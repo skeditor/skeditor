@@ -13,7 +13,9 @@ import type {
   Paragraph as SkParagraph,
   TextShadow as SkTextShadow,
   ParagraphStyle as SkParagraphStyle,
+  TypefaceFontProvider as SkTypefaceFontProvider,
 } from 'canvaskit-wasm';
+import { Subject } from 'rxjs';
 
 import * as CanvasKitInitFn from 'canvaskit-wasm';
 
@@ -34,23 +36,24 @@ export const CanvaskitPromised = (CanvasKitInitFn as any)({
 }).then((CanvasKitRes) => {
   sk.CanvasKit = CanvasKitRes;
   (window as any).CanvasKit = CanvasKitRes;
+  getFontProvider();
   return sk.CanvasKit;
 }) as Promise<CanvasKit>;
 
 let fontMgr: FontMgr | undefined;
+let fontProvider: SkTypefaceFontProvider | undefined;
+
+export const fontLoaded = new Subject<string>();
 
 export const defaultFonts = ['Roboto', 'HarmonyOS Sans SC', 'Noto Color Emoji'];
+const defaultFontFiles = ['/Roboto-Regular.ttf', '/HarmonyOSSansSC-Regular.ttf', '/colorfulemoji.woff2'];
 
 // 使用的时候再调用，CanvasKit 可能还没好。
 export function getFontMgr() {
   if (fontMgr) {
     return Promise.resolve(fontMgr!);
   }
-  return Promise.all(
-    ['/Roboto-Regular.ttf', '/HarmonyOSSansSC-Regular.ttf', '/colorfulemoji.woff2'].map((url) =>
-      fetch(url).then((res) => res.arrayBuffer())
-    )
-  ).then((fonts) => {
+  return Promise.all(defaultFontFiles.map((url) => fetch(url).then((res) => res.arrayBuffer()))).then((fonts) => {
     fonts.forEach((font) => {
       const hFont = new sk.CanvasKit.Font((sk.CanvasKit.FontMgr.RefDefault() as any).MakeTypefaceFromData(font), 72);
       console.log('>>> Font info:', hFont.getMetrics());
@@ -63,6 +66,23 @@ export function getFontMgr() {
     });
     return fontMgr!;
   });
+}
+
+export function getFontProvider() {
+  if (fontProvider) {
+    return fontProvider;
+  }
+  fontProvider = sk.CanvasKit.TypefaceFontProvider.Make();
+  defaultFontFiles.forEach((filename, idx) => {
+    fetch(filename)
+      .then((res) => res.arrayBuffer())
+      .then((buffer) => {
+        const fontName = defaultFonts[idx];
+        fontProvider!.registerFont(buffer, fontName);
+        fontLoaded.next(fontName);
+      });
+  });
+  return fontProvider;
 }
 
 export function newColorPaint(color: InputColor) {
@@ -95,6 +115,7 @@ export {
   SkShader,
   SkGrDirectContext,
   SkFontMgr,
+  SkTypefaceFontProvider,
   SkSurface,
   SkParagraph,
   SkTextShadow,

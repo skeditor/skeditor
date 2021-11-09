@@ -14,13 +14,13 @@ let hoverPaint: SkPaint;
 CanvaskitPromised.then(() => {
   const colorSelect = sk.CanvasKit.Color(21, 129, 205, 1);
 
-  // const colorHover = sk.CanvasKit.Color(21, 129, 205, 0.6);
+  const colorHover = sk.CanvasKit.Color(21, 129, 205, 0.4);
 
   selectPaint = newStrokePaint(2, colorSelect);
-  hoverPaint = newStrokePaint(2, colorSelect);
+  hoverPaint = newStrokePaint(2, colorHover);
 
-  const dashEffect = sk.CanvasKit.PathEffect.MakeDash([5, 5]);
-  hoverPaint.setPathEffect(dashEffect);
+  // const dashEffect = sk.CanvasKit.PathEffect.MakeDash([5, 5]);
+  // hoverPaint.setPathEffect(dashEffect);
 });
 
 export class SelectionView extends SkyBoxView {
