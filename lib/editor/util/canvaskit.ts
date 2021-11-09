@@ -36,7 +36,8 @@ export const CanvaskitPromised = (CanvasKitInitFn as any)({
 }).then((CanvasKitRes) => {
   sk.CanvasKit = CanvasKitRes;
   (window as any).CanvasKit = CanvasKitRes;
-  getFontProvider();
+  fontProvider = sk.CanvasKit.TypefaceFontProvider.Make();
+
   return sk.CanvasKit;
 }) as Promise<CanvasKit>;
 
@@ -45,15 +46,25 @@ let fontProvider: SkTypefaceFontProvider | undefined;
 
 export const fontLoaded = new Subject<string>();
 
-export const defaultFonts = ['Roboto', 'HarmonyOS Sans SC', 'Noto Color Emoji'];
-const defaultFontFiles = ['/Roboto-Regular.ttf', '/HarmonyOSSansSC-Regular.ttf', '/colorfulemoji.woff2'];
+export const defaultFonts = [
+  'Roboto',
+  'HarmonyOS Sans SC',
+  // 'Noto Color Emoji'
+];
+const defaultFontFiles = [
+  'Roboto-Regular.ttf',
+  'HarmonyOSSansSC-Regular.ttf',
+  // 'colorfulemoji.woff2'
+];
 
 // 使用的时候再调用，CanvasKit 可能还没好。
 export function getFontMgr() {
   if (fontMgr) {
     return Promise.resolve(fontMgr!);
   }
-  return Promise.all(defaultFontFiles.map((url) => fetch(url).then((res) => res.arrayBuffer()))).then((fonts) => {
+  return Promise.all(
+    defaultFontFiles.map((filename) => fetch(process.env.PUBLIC_PATH + filename).then((res) => res.arrayBuffer()))
+  ).then((fonts) => {
     fonts.forEach((font) => {
       const hFont = new sk.CanvasKit.Font((sk.CanvasKit.FontMgr.RefDefault() as any).MakeTypefaceFromData(font), 72);
       console.log('>>> Font info:', hFont.getMetrics());
@@ -69,21 +80,18 @@ export function getFontMgr() {
 }
 
 export function getFontProvider() {
-  if (fontProvider) {
-    return fontProvider;
-  }
-  fontProvider = sk.CanvasKit.TypefaceFontProvider.Make();
-  defaultFontFiles.forEach((filename, idx) => {
-    fetch(filename)
-      .then((res) => res.arrayBuffer())
-      .then((buffer) => {
-        const fontName = defaultFonts[idx];
-        fontProvider!.registerFont(buffer, fontName);
-        fontLoaded.next(fontName);
-      });
-  });
-  return fontProvider;
+  return fontProvider!;
 }
+
+defaultFontFiles.forEach((filename, idx) => {
+  Promise.all([fetch(process.env.PUBLIC_PATH + filename), CanvaskitPromised])
+    .then(([res]) => res.arrayBuffer())
+    .then((buffer) => {
+      const fontName = defaultFonts[idx];
+      fontProvider!.registerFont(buffer, fontName);
+      fontLoaded.next(fontName);
+    });
+});
 
 export function newColorPaint(color: InputColor) {
   const paint = new sk.CanvasKit.Paint();

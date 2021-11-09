@@ -17,12 +17,12 @@ cp.execSync(`cp  ${path.join(root, 'public/*')} ${outputDir}`);
 const tpl = template(fs.readFileSync(path.join(__dirname, 'index.template.html')));
 const manifest = require(path.join(root, '.nuxt/dist/server/client.manifest.json'));
 
-const html = tpl({ scripts: manifest.initial.map((filename) => `/_nuxt/${filename}`) });
+const html = tpl({ scripts: manifest.initial.map((filename) => `${process.env['PUBLIC_PATH']}_nuxt/${filename}`) });
 
 fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 
-if (process.env.PUBLISH_DIRS) {
-  cp.execSync(`cp -r .output/* ${process.env.PUBLISH_DIRS}`);
+if (process.env.GITHUB_PAGE) {
+  cp.execSync(`cp -r .output/index.html ${process.env.GITHUB_PAGE}/index.html`);
 }
 
 console.log('>>>> Copied to .output <<<<');

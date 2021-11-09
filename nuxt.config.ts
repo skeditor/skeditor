@@ -1,12 +1,16 @@
 import path from 'path';
 import { defineNuxtConfig } from 'nuxt3';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+require('dotenv').config();
 
 export default defineNuxtConfig({
   ssr: false,
   target: 'static',
   modern: true,
   vite: false,
+  env: {
+    PUBLIC_PATH: process.env.NODE_ENV === 'development' ? '/' : process.env['PUBLIC_PATH'],
+  },
   buildModules: [
     '@nuxtjs/eslint-module',
     {
@@ -55,6 +59,7 @@ export default defineNuxtConfig({
   css: ['~/assets/global.css', 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css'],
   plugins: ['~/plugins/config.client.ts'],
   build: {
+    publicPath: process.env['PUBLIC_PATH'] + '_nuxt/',
     plugins: [new ForkTsCheckerWebpackPlugin()],
     // extend(config) {
     //   console.log('>>>> got config');
