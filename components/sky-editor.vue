@@ -8,7 +8,9 @@
     <div class="editor-body">
       <Outline />
       <div class="canvas-container" ref="canvasContainer">
-        <EmptyPlaceholder v-if="isEmpty" @pick="onPickFile" />
+        <EmptyPlaceholder v-if="isEmpty" @pick="onPickFile">
+          <Examples @selectExample="onSelectExample" />
+        </EmptyPlaceholder>
       </div>
     </div>
   </section>
@@ -21,6 +23,7 @@ import { EditorState } from './editor-state';
 import EmptyPlaceholder from './empty-placeholder.vue';
 import { watch } from 'vue';
 import Nav from './nav.vue';
+import Examples from './examples.vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
@@ -31,6 +34,7 @@ export default defineComponent({
     Outline,
     EmptyPlaceholder,
     Nav,
+    Examples,
   },
   data() {
     return {
@@ -116,6 +120,9 @@ export default defineComponent({
     },
     onPickFile(file: File) {
       file.arrayBuffer().then((buffer) => this.openSketch(file.name, buffer));
+    },
+    onSelectExample({ buffer, filename }) {
+      this.openSketch(filename, buffer);
     },
   },
 });

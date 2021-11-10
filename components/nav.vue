@@ -11,7 +11,7 @@
       <p class="p-scale">{{ scaleStr }}</p>
     </NavButton>
     <NavButton @click="onScaleUp"><ScaleUpIcon /></NavButton>
-    <a href="https://github.com/mightyjiao/sketch-editor" target="_blank">
+    <a href="https://github.com/skeditor/skeditor" target="_blank">
       <NavButton><GithubIcon /></NavButton>
     </a>
   </nav>

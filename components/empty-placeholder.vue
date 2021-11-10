@@ -11,6 +11,7 @@
       <DropHereIcon class="drop-icon" />
       <p class="tip">Click or Drop Sketch Files Here</p>
     </div>
+    <slot />
   </div>
 </template>
 <script setup lang="ts">

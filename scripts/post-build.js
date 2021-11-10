@@ -11,7 +11,7 @@ cp.execSync('rm -rf ' + outputDir);
 cp.execSync('mkdir -p ' + outputDir);
 
 cp.execSync(`cp -r ${path.join(root, '/.nuxt/dist/client')} ${outputDir}/_nuxt`);
-cp.execSync(`cp  ${path.join(root, 'public/*')} ${outputDir}`);
+cp.execSync(`cp -r ${path.join(root, 'public/*')} ${outputDir}`);
 
 const tpl = template(fs.readFileSync(path.join(__dirname, 'index.template.html')));
 const manifest = require(path.join(root, '.nuxt/dist/server/client.manifest.json'));
