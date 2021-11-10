@@ -1,12 +1,17 @@
 // https://github.com/eslint-plugin-promise@^5.0.0 typescript-eslint/typescript-eslint/blob/master/docs/getting-started/linting/README.md
 
 module.exports = {
+  env: {
+    node: true,
+    commonjs: true,
+  },
   root: true,
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   rules: {
     '@typescript-eslint/no-empty-function': 0,
+    '@typescript-eslint/no-var-requires': 0,
   },
   ignorePatterns: ['.*', '*.vue'],
 };

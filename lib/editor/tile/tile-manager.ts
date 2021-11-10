@@ -172,16 +172,6 @@ export class TileManager {
     surface.delete();
   }
 
-  // debugCleanUselessTiles() {
-  //   for (let [key] of this.cacheTiles) {
-  //     const [scale] = key.split(':');
-  //     const scaleNum = parseFloat(scale);
-  //     if (floorBinaryScale(scaleNum) !== scaleNum) {
-  //       this.cacheTiles.delete(key);
-  //     }
-  //   }
-  // }
-
   debugTexture(scale: number, x: number, y: number) {
     const image = this.getTile(scale, x, y);
     if (!image) return;

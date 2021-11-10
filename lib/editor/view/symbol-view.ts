@@ -1,7 +1,6 @@
 import { SkySymbolInstance, SkySymbolMaster } from '../model';
 import { SkyBaseLayerView, SkyArtboardView } from './';
 import { CacheGetter } from '../util/misc';
-import { Rect } from '../base';
 
 export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
   requireLayerDropShadow = true;

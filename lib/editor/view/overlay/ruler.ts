@@ -1,6 +1,6 @@
 import sk, { defaultFonts, SkPaint, SkParagraphStyle } from '../../util/canvaskit';
 import { SkyBoxView } from './box-view';
-import { Point, Rect } from '../../base';
+import { Point } from '../../base';
 import { ZoomState } from '../../controller/zoom-state';
 import { RulerThickness } from '../const';
 
@@ -84,11 +84,9 @@ export class Ruler extends SkyBoxView {
     skCanvas.translate(this.frame.x, this.frame.y);
 
     if (this.isTop) {
-      //   skCanvas.drawRect(sk.CanvasKit.XYWHRect(0, 0, width, RulerThickness), this.bgPaint);
       skCanvas.drawLine(0, RulerThickness, width, RulerThickness, this.linePaint);
       this.drawGroovesTop(zoomState, axisOffset);
     } else {
-      //   skCanvas.drawRect(sk.CanvasKit.XYWHRect(0, 0, RulerThickness, height), this.bgPaint);
       skCanvas.drawLine(RulerThickness, 0, RulerThickness, height, this.linePaint);
       this.drawGroovesLeft(zoomState, axisOffset);
     }

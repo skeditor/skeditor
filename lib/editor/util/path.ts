@@ -1,7 +1,4 @@
-// 之前用 paperjs 之前的代码可以拿来用，开森
-
 import sk from './canvaskit';
-import { Rect } from '../base/rect';
 import { SkyCurvePoint, SkyCurveMode } from '../model';
 import { Point } from '../base/point';
 

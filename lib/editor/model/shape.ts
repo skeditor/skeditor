@@ -18,14 +18,6 @@ export class SkyShapeGroup {
   }
 }
 
-// export class SkyShapePath extends SkyBaseLayer {
-//   _class = ClassValue.ShapePath;
-
-//   constructor(ctx: SkyModel, data: SketchFormat.ShapePath) {
-//     super(ctx, data);
-//   }
-// }
-
 // General Object
 export class SkyGroup {
   readonly _class = ClassValue.ShapeGroup;
@@ -33,10 +25,6 @@ export class SkyGroup {
   constructor(private ctx: SkyModel, private data: SketchFormat.Group) {
     //
   }
-
-  // buildLayers() {
-  //   this.
-  // }
 
   toJson() {
     return this.data;

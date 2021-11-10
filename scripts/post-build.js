@@ -1,4 +1,3 @@
-/* eslint-disable */
 const path = require('path');
 const cp = require('child_process');
 const fs = require('fs');
@@ -22,7 +21,12 @@ const html = tpl({ scripts: manifest.initial.map((filename) => `${process.env['P
 fs.writeFileSync(path.join(outputDir, 'index.html'), html);
 
 if (process.env.GITHUB_PAGE) {
-  cp.execSync(`cp -r .output/index.html ${process.env.GITHUB_PAGE}/index.html`);
+  const githubPageProjectDir = path.resolve(process.env.GITHUB_PAGE);
+  cp.execSync(`cp -r .output/index.html ${githubPageProjectDir}/index.html`);
+  cp.execSync(`git commit -am "publish ${new Date().toISOString()}"`, { cwd: githubPageProjectDir });
+  cp.execSync(`git push`, { cwd: githubPageProjectDir });
 }
 
-console.log('>>>> Copied to .output <<<<');
+require('./upload-oss');
+
+console.log('>>>> post build success <<<<');

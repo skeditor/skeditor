@@ -3,7 +3,6 @@ import { SkyBaseLayerView, SkySymbolInstanceView, SkyPageView, OverlayView, SkyA
 import { Disposable, Rect } from '../base';
 import sk, {
   CanvaskitPromised,
-  getFontMgr,
   SkGrDirectContext,
   SkCanvas,
   SkSurface,

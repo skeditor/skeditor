@@ -9,7 +9,7 @@
   >
     <div class="content" @click="pick">
       <DropHereIcon class="drop-icon" />
-      <p class="tip">Drop Sketch Files Here</p>
+      <p class="tip">Click or Drop Sketch Files Here</p>
     </div>
   </div>
 </template>

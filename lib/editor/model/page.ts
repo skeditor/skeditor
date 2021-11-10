@@ -1,4 +1,4 @@
-import { SkyBaseGroup, SketchFormat, SkyModel, ClassValue, SkyBaseLayer } from '.';
+import { SkyBaseGroup, SketchFormat, ClassValue, SkyBaseLayer } from '.';
 import { Point } from '../base/point';
 
 export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {

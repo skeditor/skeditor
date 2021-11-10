@@ -19,27 +19,11 @@ import { convertRadiusToSigma } from '../util/sketch-to-skia';
 import { createPath } from '../util/path';
 import { CacheGetter } from '../util/misc';
 
-/**
- * shapeGroup 和 shapeLie 本应该继承同一个类
- * 处理 paint、border、点击、生成小图标这些能力。
- *
- * 但是现在继承了 BaseGroup， 是不是应该把 BaseGroup 干掉，直接放在 BaseLayer 里？
- */
-
-// path 是否应该在 constructor 里创建？
-// 如果在这里创建，就不知道自己是否在 symbol instance 里了 ，也就没法知道是否需要 scale
-
-// shapeGroup 和 shapePath 都需要 scale，但是否可以先创建 path，在 render 的时候，再判断是否需要 scale？
-
-// shapeGroup 下的 path 刚好也不用 render， 单个 shapePath 也在 render 的时候 scale
-
 type SkyBasePath = SkyShapeGroup | SkyBaseShapeLike;
 export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> extends SkyBaseLayerView<T> {
   children!: (SkyShapePathLikeView | SkyTextView)[];
   path?: SkPath;
   _painter?: PathPainter;
-
-  // private _needUpdateSymbolScale = true;
 
   scaleOffsetX = 0;
   scaleOffsetY = 0;
@@ -53,17 +37,6 @@ export abstract class SkyBasePathView<T extends SkyBasePath = SkyBasePath> exten
   }
 
   protected abstract createPath(): SkPath | undefined;
-
-  // 需要 symbol master 信息，所以在 render 的时候创建 path
-  // private updatePathScale() {
-  //   // this.path = this.createPath();
-
-  //   this.applySymbolScale();
-
-  //   // scale 之后再更新 shadow，反正 shadow 也不会被电击，render 时候渲染正好。
-  //   this.calcShadowPath();
-  //   this._needUpdateSymbolScale = false;
-  // }
 
   // 应用了当前 frame x,y rotation ,flip 状态的 path
   // 1 在 instance 内拉伸时，需要计算 bounds 这个时候会用到
@@ -285,8 +258,6 @@ export class PathPainter extends Disposable {
    * 3 如果所有 fill 都不生效， 所有 stroke 合并在一起
    * 4 如果所有 fill 不生效，并且 所有 border 也不生效，用原来的 path 渲染 shadow ，并且不设置 clip。
    * 5 如果 path 非闭合，border 叠加进行渲染。 如果无 border，则无 shadow。
-   *
-   * Todo, layout 的情况下调用了两次，需要优化下
    */
   private calcShadowPath() {
     if (!this.path) return;
