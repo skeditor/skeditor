@@ -17,7 +17,7 @@
   </nav>
 </template>
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue';
+import { computed, watch } from 'vue';
 import NavButton from './nav-button.vue';
 import GithubIcon from '~/assets/svg-comp/github.svg';
 import ScaleUpIcon from '~/assets/svg-comp/scale-up.svg';
@@ -26,6 +26,7 @@ import SlicingIcon from '~/assets/svg-comp/slicing.svg';
 import FileOpenIcon from '~/assets/svg-comp/file-open.svg';
 import { EditorState } from './editor-state';
 import { useSketchFilePicker } from './composables/file-picker';
+import { useDropFile } from './composables/drop-file';
 import { outlineWidth } from './outline/outline-business';
 
 const emit = defineEmits<{
@@ -58,6 +59,12 @@ const paddingStyle = computed(() => {
   return {
     width: `${outlineWidth.value}px`,
   };
+});
+
+watch(useDropFile(), (file) => {
+  if (file) {
+    emit('pick', file);
+  }
 });
 </script>
 

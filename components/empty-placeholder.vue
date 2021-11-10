@@ -2,10 +2,10 @@
   <div
     class="empty"
     :class="{ active: active }"
+    @mouseover="onMouseOver"
     @dragenter="onDragEnter"
     @dragover="onDragOver"
     @dragleave="onDragLeave"
-    @drop="onDrop"
   >
     <div class="content" @click="pick">
       <DropHereIcon class="drop-icon" />
@@ -49,18 +49,8 @@ function onDragEnter(event: DragEvent) {
     active.value = true;
   }
 }
-
-function onDrop(event: DragEvent) {
-  event.preventDefault();
+function onMouseOver() {
   active.value = false;
-  const file = Array.from(event.dataTransfer?.files || []).find((file) => {
-    return file.name.toLowerCase().endsWith('.sketch');
-  });
-  if (file) {
-    emit('pick', file);
-  } else {
-    alert('It it not a sketch file!');
-  }
 }
 </script>
 <style scoped>
