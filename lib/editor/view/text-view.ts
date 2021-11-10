@@ -60,6 +60,10 @@ export class SkyTextView extends SkyBaseLayerView<SkyText> {
     }
   }
 
+  layoutSelf() {
+    this.commonLayoutSelf();
+  }
+
   _render() {
     this.painter.paint();
   }
@@ -246,12 +250,16 @@ class TextPainter {
 
       const para = builder.build();
       builder.delete();
-      if (frame.height / (paraStyle.textStyle?.fontSize || 12) > 2) {
+      if (
+        frame.height / (paraStyle.textStyle?.fontSize || 12) > 2 ||
+        paraStyle.textAlign !== sk.CanvasKit.TextAlign.Left
+      ) {
         para.layout(frame.width);
       } else {
         para.layout(10e6);
       }
       const paraHeight = para.getHeight();
+      para.getMaxWidth;
 
       const ret = [para, curY] as [SkParagraph, number];
       curY += paraHeight + paraSpacing;

@@ -205,12 +205,6 @@ export class SkySymbolInstance extends SkyBaseLayer<SketchFormat.SymbolInstance>
 
     const textStyleId = this.overrideValuesHelper.overrideTextStyles.get(childId);
     const textStyle = textStyleId ? this.ctx.getStyle(textStyleId) : undefined;
-    // if (textStyleId) {
-    //   const textStyle = this.ctx.getStyle(textStyleId);
-    //   if (textStyle) {
-    // retStyle = retStyle.overrideTextStyle(textStyle.textStyle, this.tintColor);
-    //   }
-    // }
 
     return retStyle.overrideStyle(textStyle?.textStyle, this.tintColor);
   }

@@ -628,10 +628,11 @@ export class SkyStyle extends SkyBaseObject<SketchFormat.Style> {
   }
 
   overrideStyle(textStyle: SkyTextStyle | undefined, tintColor: SkyColor | undefined) {
+    const originTextStyle = this.textStyle;
     return new Proxy(this, {
       get(target: SkyStyle, prop: string, receiver: any) {
         if (prop === 'textStyle') {
-          return textStyle;
+          return textStyle || originTextStyle;
         }
         if (prop === 'tintColor') {
           return tintColor;

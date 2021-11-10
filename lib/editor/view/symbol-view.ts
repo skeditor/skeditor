@@ -1,6 +1,7 @@
 import { SkySymbolInstance, SkySymbolMaster } from '../model';
 import { SkyBaseLayerView, SkyArtboardView } from './';
 import { CacheGetter } from '../util/misc';
+import { newColorPaint } from '../util/canvaskit';
 
 export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
   requireLayerDropShadow = true;
@@ -32,8 +33,16 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
     this.commonLayoutSelf();
   }
 
+  renderBg() {
+    if (this.model.refModel?.hasBackgroundColor) {
+      const backgroundColor = this.model.refModel.backgroundColor.skColor;
+      this.ctx.skCanvas.drawRect(this.frame.onlySize.toSk(), newColorPaint(backgroundColor));
+    }
+  }
+
   _render() {
     if (!this.model.refModel) return;
+    this.renderBg();
     this.renderChildren();
   }
 }

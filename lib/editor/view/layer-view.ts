@@ -300,13 +300,13 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     };
   }
 
-  calcOffsetAfterScale(newBounds: Rect, oldBounds?: Rect) {
+  calcOffsetAfterScale(newBounds: Rect, oldBounds: Rect) {
     const parent = this.parent!;
 
     const instanceFrame = parent.frame;
     const masterFrame = parent.intrinsicFrame;
 
-    const curFrame = oldBounds || this.intrinsicFrame;
+    const curFrame = oldBounds;
 
     let newX = curFrame.x;
     let newY = curFrame.y;
@@ -380,7 +380,7 @@ export abstract class SkyBaseLayerView<T extends SkyBaseLayer = SkyBaseLayer> ex
     const oldFrame = this.model.frame;
 
     const newFrame = new Rect(0, 0, scaleX * oldFrame.width, scaleY * oldFrame.height);
-    const { newX, newY } = this.calcOffsetAfterScale(newFrame);
+    const { newX, newY } = this.calcOffsetAfterScale(newFrame, oldFrame);
     newFrame.x = newX;
     newFrame.y = newY;
 
