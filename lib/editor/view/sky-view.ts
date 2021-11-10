@@ -78,11 +78,6 @@ export class SkyView extends Disposable {
 
   _canvasStack = [] as SkCanvas[];
 
-  // 当前绘制的 symbol instance context
-  // 在 render 的时候使用，后续可以改成放在 renderCtx 中。
-  symbolContext?: SkySymbolInstanceView;
-  _symbolContextStack: SkySymbolInstanceView[] = [];
-
   viewMap = new Map<string, SkyBaseLayerView>();
 
   pageState = new PageState();
@@ -116,7 +111,11 @@ export class SkyView extends Disposable {
     this.services = new Services(this);
 
     this._disposables.push(
-      merge(model.changed$, this.pageState.changed).subscribe(() => {
+      this.pageState.changed.subscribe(() => {
+        this.markDirty();
+      }),
+      model.imageLoaded$.pipe(debounceTime(100)).subscribe(() => {
+        this.pageView?.invalidateTiles(true);
         this.markDirty();
       }),
 
@@ -292,25 +291,6 @@ export class SkyView extends Disposable {
     this.skCanvas = canvas;
   }
 
-  // beginPicture(fn: ) {
-  //   const recorder = new sk.CanvasKit.PictureRecorder()
-
-  // }
-
-  // endPicture() {
-
-  // }
-
-  enterSymbolInstance(symbolIns: SkySymbolInstanceView) {
-    this._symbolContextStack.push(symbolIns);
-    this.symbolContext = symbolIns;
-  }
-
-  leaveSymbolInstance() {
-    this._symbolContextStack.pop();
-    this.symbolContext = this._symbolContextStack[this._symbolContextStack.length - 1];
-  }
-
   // 重新绘制
   render() {
     if (!this.dirty) return;
@@ -367,6 +347,9 @@ export class SkyView extends Disposable {
       canvasEl.parentNode.removeChild(canvasEl);
     }
     this.services.dispose();
+    if (SkyView.currentContext === this) {
+      (SkyView.currentContext as any) = undefined;
+    }
   }
 
   debugTexture() {

@@ -34,10 +34,7 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
 
   _render() {
     if (!this.model.refModel) return;
-
-    this.ctx.enterSymbolInstance(this);
     this.renderChildren();
-    this.ctx.leaveSymbolInstance();
   }
 }
 

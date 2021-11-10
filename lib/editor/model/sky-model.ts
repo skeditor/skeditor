@@ -20,7 +20,7 @@ export class SkyModel extends Disposable {
 
   private foreignSymbols: SkySymbolMaster[] = [];
 
-  changed$ = new Subject();
+  imageLoaded$ = new Subject();
 
   private imageCache = new Map<string, SkImage>();
 
@@ -137,5 +137,8 @@ export class SkyModel extends Disposable {
   dispose() {
     super.dispose();
     this.imageCache.clear();
+    if (SkyModel.currentContext === this) {
+      (SkyModel.currentContext as any) = undefined;
+    }
   }
 }

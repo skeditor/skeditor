@@ -467,7 +467,7 @@ export class SkyFile extends SkyBaseObject<SketchFormat.FileRef | SketchFormat.D
       this.ctx.readImgFile(data._ref).then((skImage) => {
         if (this.skImage !== skImage) {
           this.skImage = skImage;
-          this.ctx.changed$.next();
+          this.ctx.imageLoaded$.next();
         }
       });
     } else if (data._class === SketchFormat.ClassValue.MSJSONOriginalDataReference) {
