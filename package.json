@@ -5,12 +5,12 @@
     "build": "nuxt build",
     "postbuild": "node scripts/post-build.js",
     "start": "node .output/server/index.mjs",
-    "link-dep": "npm link canvaskit-wasm"
+    "link-dep": "npm link @skeditor/canvaskit-wasm"
   },
   "dependencies": {
+    "@skeditor/canvaskit-wasm": "0.28.1",
     "@sketch-hq/sketch-file-format-ts": "^6.1.1",
     "bowser": "1.9.2",
-    "canvaskit-wasm": "^0.27.0",
     "debug": "2.6.9",
     "jszip": "^3.4.0",
     "rxjs": "6.2.1",

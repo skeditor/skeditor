@@ -59,7 +59,7 @@ export default defineNuxtConfig({
   css: ['~/assets/global.css', 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css'],
   plugins: ['~/plugins/config.client.ts'],
   build: {
-    publicPath: process.env['PUBLIC_PATH'] + '_nuxt/',
+    publicPath: process.env.NODE_ENV === 'development' ? undefined : process.env['PUBLIC_PATH'] + '_nuxt/',
     plugins: [new ForkTsCheckerWebpackPlugin()],
     // extend(config) {
     //   console.log('>>>> got config');

@@ -12,7 +12,7 @@ import type {
   Paint as SkPaint,
   Paragraph as SkParagraph,
   ParagraphStyle as SkParagraphStyle,
-} from 'canvaskit-wasm';
+} from '@skeditor/canvaskit-wasm';
 import invariant from 'ts-invariant';
 
 export const enum ClassValue {

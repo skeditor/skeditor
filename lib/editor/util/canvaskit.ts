@@ -1,4 +1,4 @@
-import type { CanvasKit, FontMgr, InputColor } from 'canvaskit-wasm';
+import type { CanvasKit, FontMgr, InputColor } from '@skeditor/canvaskit-wasm';
 import type {
   Canvas as SkCanvas,
   Path as SkPath,
@@ -14,16 +14,16 @@ import type {
   TextShadow as SkTextShadow,
   ParagraphStyle as SkParagraphStyle,
   TypefaceFontProvider as SkTypefaceFontProvider,
-} from 'canvaskit-wasm';
+} from '@skeditor/canvaskit-wasm';
 import { Subject } from 'rxjs';
 
-import * as CanvasKitInitFn from 'canvaskit-wasm';
+import * as CanvasKitInitFn from '@skeditor/canvaskit-wasm';
 
 let canvaskitWasm: string | undefined = undefined;
 
 // node 环境下不需要 locateFile
 if (process.env.NODE_ENV !== 'test') {
-  canvaskitWasm = require('!!file-loader!canvaskit-wasm/bin/canvaskit.wasm');
+  canvaskitWasm = require('!!file-loader!@skeditor/canvaskit-wasm/bin/canvaskit.wasm');
   canvaskitWasm = (canvaskitWasm as unknown as { default: string }).default || canvaskitWasm;
 }
 

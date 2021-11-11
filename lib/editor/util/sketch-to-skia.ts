@@ -1,5 +1,5 @@
 import sk, { CanvaskitPromised } from './canvaskit';
-import type { CanvasKit as CanvasKitType, BlendMode, StrokeCap, StrokeJoin } from 'canvaskit-wasm';
+import type { CanvasKit as CanvasKitType, BlendMode, StrokeCap, StrokeJoin } from '@skeditor/canvaskit-wasm';
 import SketchFormat from '@sketch-hq/sketch-file-format-ts';
 
 let CanvasKit: CanvasKitType;
