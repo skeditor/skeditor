@@ -1,5 +1,5 @@
-# Sketch Editor
-
+# SkEditor 
+[![Gitter](https://badges.gitter.im/skeditor/community.svg)](https://gitter.im/skeditor/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ## Intro
 
 This is a online vector graphics editor.  
