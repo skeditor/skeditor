@@ -34,8 +34,9 @@ export class SkySymbolInstanceView extends SkyBaseLayerView<SkySymbolInstance> {
   }
 
   renderBg() {
-    if (this.model.refModel?.hasBackgroundColor) {
-      const backgroundColor = this.model.refModel.backgroundColor.skColor;
+    const refModel = this.model.refModel;
+    if (refModel?.hasBackgroundColor && refModel.includeBackgroundColorInInstance) {
+      const backgroundColor = refModel.backgroundColor.skColor;
       this.ctx.skCanvas.drawRect(this.frame.onlySize.toSk(), newColorPaint(backgroundColor));
     }
   }

@@ -5,11 +5,13 @@ export class SkySymbolMaster extends SkyBaseGroup<SketchFormat.SymbolMaster> {
   readonly _class = ClassValue.SymbolMaster;
   backgroundColor = new SkyColor();
   hasBackgroundColor = false;
+  includeBackgroundColorInInstance = false;
 
   _fromJson(data: SketchFormat.SymbolMaster) {
     super._fromJson(data);
     this.backgroundColor.fromJson(data.backgroundColor);
     this.hasBackgroundColor = data.hasBackgroundColor;
+    this.includeBackgroundColorInInstance = data.includeBackgroundColorInInstance;
     this.ctx.registerSymbol(data.symbolID, this);
   }
 }

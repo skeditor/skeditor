@@ -159,8 +159,8 @@ export class EditorState {
         this.selectedLayerIdRef.value = view.pageState.selectedLayerView?.model.objectId ?? '';
         if (this.selectedLayerModel) {
           this.selectedPageModel?.expandLayers(this.selectedLayerModel);
-          this.outlineChangeEvent.value++;
         }
+        this.outlineChangeEvent.value++;
       }),
       view.pageState.hoverChange.subscribe(() => {
         this.hoveredLayerIdRef.value = view.pageState.hoverLayerView?.model.objectId ?? '';
