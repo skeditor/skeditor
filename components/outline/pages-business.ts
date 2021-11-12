@@ -1,10 +1,10 @@
-import { useLocalStorage } from '../composables/localstorage';
+import { localStorageRef } from '../composables/localstorage';
 
 const InitHeight = 150;
 const MinHeight = 150;
 
 export function setupPages() {
-  const height = useLocalStorage('PagesScrollHeight', InitHeight);
+  const height = localStorageRef('PagesScrollHeight', InitHeight);
 
   let _dragStartHeight = 0;
 

@@ -6,7 +6,7 @@
       </select>
     </Nav>
     <div class="editor-body">
-      <Outline />
+      <Outline v-if="sideBarOpen" />
       <div class="canvas-container" ref="canvasContainer">
         <EmptyPlaceholder v-if="isEmpty" @pick="onPickFile">
           <Examples @selectExample="onSelectExample" />
@@ -15,8 +15,7 @@
     </div>
   </section>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import FileButton from './file-button.vue';
 import Outline from './outline/outline.vue';
 import { EditorState } from './editor-state';
@@ -24,108 +23,94 @@ import EmptyPlaceholder from './empty-placeholder.vue';
 import { watch } from 'vue';
 import Nav from './nav.vue';
 import Examples from './examples.vue';
+import { localStorageRef } from './composables/localstorage';
+import { ref, onMounted } from 'vue';
 
 const docLists = 'http://localhost:3031/docs';
 const api = 'http://localhost:3031/docs/';
 
-export default defineComponent({
-  components: {
-    FileButton,
-    Outline,
-    EmptyPlaceholder,
-    Nav,
-    Examples,
-  },
-  data() {
-    return {
-      isEmpty: true,
-      list: [],
-      pages: [] as string[],
-      selectedFile: (localStorage.getItem('lastChooseFile') || '') as string,
-      selectedPage: (localStorage.getItem('lastChosePage') || '') as string,
-    };
-  },
+const isEmpty = ref(true);
+const list = ref([]);
+const pages = ref([] as string[]);
+const selectedFile = localStorageRef('LastChooseFile', '');
+const selectedPage = localStorageRef('LastChosePage', '');
+const sideBarOpen = EditorState.shared.showSidebar;
 
-  mounted() {
-    this.fetchLocalSketchFileList();
+const canvasContainer = ref();
 
-    watch(EditorState.shared.selectedPageIndex, (idx) => {
-      localStorage.setItem('lastChosePage', this.pages[idx] + '');
-    });
-  },
-  methods: {
-    fetchLocalSketchFileList() {
-      return fetch(docLists)
-        .then((res) => res.json())
-        .then((val) => {
-          this.list = val;
-          if (!this.selectedFile) {
-            this.selectedFile = val[0];
-          }
+onMounted(() => {
+  fetchLocalSketchFileList();
 
-          this.loadFile();
-        })
-        .catch(() => {
-          // console.error(err);
-          console.log('Cant find local files, please select or drop a file on this web app.');
-        });
-    },
-    loadSketchFile(url: string) {
-      return fetch(url).then((res) => {
-        if (res.status !== 200) {
-          return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
-        }
-        return res.arrayBuffer();
-      });
-    },
-    loadFile(this: any) {
-      this.loadSketchFile(api + this.selectedFile)
-        .then((buffer) => this.openSketch(this.selectedFile, buffer))
-        .catch((err) => {
-          console.error(err);
-          console.log('Cant load local files. Please check local development env.');
-        });
-    },
-
-    async openSketch(filename: string, buffer: ArrayBuffer) {
-      await EditorState.shared.openSketchArrayBuffer(
-        this.removeExt(filename),
-        buffer,
-        this.$refs['canvasContainer'] as HTMLElement
-      );
-      this.isEmpty = false;
-      this.pages = EditorState.shared.pages;
-      if (!this.selectedPage) {
-        this.selectedPage = this.pages[0];
-      }
-      this.renderPage();
-    },
-
-    onFileChange(this: any) {
-      localStorage.setItem('lastChooseFile', this.selectedFile + '');
-      this.loadFile();
-    },
-
-    renderPage(this: any) {
-      let idx = this.pages.indexOf(this.selectedPage);
-      if (idx === -1) {
-        idx = 0;
-        this.selectedPage = this.pages[0];
-      }
-      EditorState.shared.selectPage(idx);
-    },
-    removeExt(str: string) {
-      const extIdx = str.toLowerCase().lastIndexOf('.sketch');
-      return str.slice(0, extIdx);
-    },
-    onPickFile(file: File) {
-      file.arrayBuffer().then((buffer) => this.openSketch(file.name, buffer));
-    },
-    onSelectExample({ buffer, filename }) {
-      this.openSketch(filename, buffer);
-    },
-  },
+  watch(EditorState.shared.selectedPageIndex, (idx) => {
+    selectedPage.value = pages.value[idx];
+  });
 });
+
+function fetchLocalSketchFileList() {
+  return fetch(docLists)
+    .then((res) => res.json())
+    .then((val) => {
+      list.value = val;
+      if (!selectedFile.value) {
+        selectedFile.value = val[0];
+      }
+
+      loadFile();
+    })
+    .catch(() => {
+      console.log('Cant find local files, please select or drop a file on this web app.');
+    });
+}
+function loadSketchFile(url: string) {
+  return fetch(url).then((res) => {
+    if (res.status !== 200) {
+      return Promise.reject(new Error('Load sketch file error: ' + res.status + ':' + res.statusText));
+    }
+    return res.arrayBuffer();
+  });
+}
+function loadFile() {
+  loadSketchFile(api + selectedFile.value)
+    .then((buffer) => openSketch(selectedFile.value, buffer))
+    .catch((err) => {
+      console.error(err);
+      console.log('Cant load local files. Please check local development env.');
+    });
+}
+
+async function openSketch(filename: string, buffer: ArrayBuffer) {
+  await EditorState.shared.openSketchArrayBuffer(removeExt(filename), buffer, canvasContainer.value as HTMLElement);
+  isEmpty.value = false;
+  pages.value = EditorState.shared.pages;
+  if (!selectedPage.value) {
+    selectedPage.value = pages.value[0];
+  }
+  renderPage();
+}
+
+function onFileChange() {
+  loadFile();
+}
+
+function renderPage() {
+  let idx = pages.value.indexOf(selectedPage.value);
+  if (idx === -1) {
+    idx = 0;
+    selectedPage.value = pages.value[0];
+  }
+  EditorState.shared.selectPage(idx);
+}
+function removeExt(str: string) {
+  const extIdx = str.toLowerCase().lastIndexOf('.sketch');
+  return str.slice(0, extIdx);
+}
+function onPickFile(file: File) {
+  file.arrayBuffer().then((buffer) => openSketch(file.name, buffer));
+}
+
+function onSelectExample({ buffer, filename }) {
+  openSketch(filename, buffer);
+}
 </script>
 <style scoped>
 .page {

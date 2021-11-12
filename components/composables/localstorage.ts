@@ -1,6 +1,6 @@
 import { Ref, watchEffect, ref } from 'vue';
 
-export function useLocalStorage<T>(key: string, initValue: T): Ref<T> {
+export function localStorageRef<T>(key: string, initValue: T): Ref<T> {
   const pre = localStorage.getItem(key);
   const ret = ref(initValue);
   if (pre) {

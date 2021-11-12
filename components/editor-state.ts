@@ -5,8 +5,11 @@ import { CanvaskitPromised } from '~/lib/editor/util/canvaskit';
 import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { Ref, onUnmounted, watchEffect, ref, shallowRef, computed } from 'vue';
 import { switchMap } from 'rxjs/operators';
+import { localStorageRef } from './composables/localstorage';
 export class EditorState {
   static shared = new EditorState();
+
+  showSidebar = localStorageRef('WorkbenchShowSidebar', true);
 
   bindings = [] as Subscription[];
 

@@ -1,11 +1,10 @@
-import { ref } from 'vue';
-import { useLocalStorage } from '../composables/localstorage';
+import { localStorageRef } from '../composables/localstorage';
 
 const InitWidth = 300;
 const MinWidth = 250;
 const MaxWidth = 500;
 
-export const outlineWidth = useLocalStorage('OutlineWidth', InitWidth);
+export const outlineWidth = localStorageRef('OutlineWidth', InitWidth);
 
 export function setupOutline() {
   const width = outlineWidth;

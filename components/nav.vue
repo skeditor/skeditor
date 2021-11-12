@@ -1,5 +1,8 @@
 <template>
   <nav class="nav">
+    <NavButton @click="onToggleSidebar"
+      ><SidebarIcon :style="sideBarOpen ? '' : 'transform:rotate(180deg);'"
+    /></NavButton>
     <NavButton @click="pick"><FileOpenIcon /></NavButton>
     <slot />
     <div :style="paddingStyle"></div>
@@ -24,6 +27,7 @@ import ScaleUpIcon from '~/assets/svg-comp/scale-up.svg';
 import ScaleDownIcon from '~/assets/svg-comp/scale-down.svg';
 import SlicingIcon from '~/assets/svg-comp/slicing.svg';
 import FileOpenIcon from '~/assets/svg-comp/file-open.svg';
+import SidebarIcon from '~/assets/svg-comp/sidebar.svg';
 import { EditorState } from './editor-state';
 import { useSketchFilePicker } from './composables/file-picker';
 import { useDropFile } from './composables/drop-file';
@@ -32,6 +36,8 @@ import { outlineWidth } from './outline/outline-business';
 const emit = defineEmits<{
   (e: 'pick', value: File): void;
 }>();
+
+const sideBarOpen = EditorState.shared.showSidebar;
 
 const { pick } = useSketchFilePicker((file) => emit('pick', file));
 const scaleRef = EditorState.shared.usePageScale();
@@ -66,6 +72,10 @@ watch(useDropFile(), (file) => {
     emit('pick', file);
   }
 });
+
+function onToggleSidebar() {
+  sideBarOpen.value = !sideBarOpen.value;
+}
 </script>
 
 <style scoped>
