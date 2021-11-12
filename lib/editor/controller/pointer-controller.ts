@@ -90,7 +90,24 @@ export class PointerController extends Disposable {
 
     if (!pageView.containsPoint(pt)) return;
 
+    const foundArtBoard = this.findOverlayArtBoard(pt);
+    if (foundArtBoard) {
+      return foundArtBoard;
+    }
+
     return deepest ? this.findViewDeep(pageView, pt) : this.findViewFirst(pageView, pt);
+  }
+
+  /**
+   * 在 ArtBoard 标题上即算选中
+   */
+  findOverlayArtBoard(pt: Point) {
+    const artBoards = this.view.overlayView.artBoardOverlays;
+    for (let i = 0; i < artBoards.length; i++) {
+      if (artBoards[i].titleFrame.containsPoint(pt)) {
+        return artBoards[i].artBoardView;
+      }
+    }
   }
 
   private findViewFirst(pageView: SkyPageView, pt: Point) {

@@ -1,4 +1,5 @@
 import { SkyArtboardView } from '..';
+import { Rect } from '../../base';
 import sk, { SkParagraphStyle, SkPaint, CanvaskitPromised, defaultFonts, SkColor } from '../../util/canvaskit';
 import { SkyBoxView } from './box-view';
 
@@ -32,7 +33,9 @@ CanvaskitPromised.then(() => {
 export class ArtBoardOverlayView extends SkyBoxView {
   clip = false;
 
-  constructor(private artBoardView: SkyArtboardView) {
+  titleFrame = new Rect();
+
+  constructor(public artBoardView: SkyArtboardView) {
     super();
   }
 
@@ -65,7 +68,15 @@ export class ArtBoardOverlayView extends SkyBoxView {
       const para = builder.build();
       para.layout(actualFrame.width);
       const lineHeight = para.getHeight();
-      skCanvas.drawParagraph(para, actualFrame.x, actualFrame.y - lineHeight - 2);
+
+      const titleFrame = new Rect(
+        actualFrame.x,
+        actualFrame.y - lineHeight - 2,
+        para.getMinIntrinsicWidth(),
+        lineHeight
+      );
+      skCanvas.drawParagraph(para, titleFrame.x, titleFrame.y);
+      this.titleFrame = titleFrame;
       para.delete();
       builder.delete();
     }

@@ -13,7 +13,7 @@ export class OverlayView extends SkyBaseView {
   private leftRuler: Ruler;
   private corner: CornerView;
   private selectionView?: SelectionView;
-  private artBoardOverlays: ArtBoardOverlayView[] = [];
+  public artBoardOverlays: ArtBoardOverlayView[] = [];
   private hoverOverlay?: SelectionView;
 
   private frame = new Rect();
