@@ -17,7 +17,8 @@ import type {
 } from '@skeditor/canvaskit-wasm';
 import { Subject } from 'rxjs';
 
-import * as CanvasKitInitFn from '@skeditor/canvaskit-wasm';
+// import * as CanvasKitInitFn from '@skeditor/canvaskit-wasm';
+const CanvasKitInitFn = require('@skeditor/canvaskit-wasm');
 
 let canvaskitWasm: string | undefined = undefined;
 
@@ -25,6 +26,7 @@ let canvaskitWasm: string | undefined = undefined;
 if (process.env.NODE_ENV !== 'test') {
   canvaskitWasm = require('!!file-loader!@skeditor/canvaskit-wasm/bin/canvaskit.wasm');
   canvaskitWasm = (canvaskitWasm as unknown as { default: string }).default || canvaskitWasm;
+  prefetchFonts();
 }
 
 const sk = {} as {
@@ -35,7 +37,9 @@ export const CanvaskitPromised = (CanvasKitInitFn as any)({
   locateFile: canvaskitWasm && (() => canvaskitWasm),
 }).then((CanvasKitRes) => {
   sk.CanvasKit = CanvasKitRes;
-  (window as any).CanvasKit = CanvasKitRes;
+  if (process.env.NODE_ENV === 'development') {
+    (window as any).CanvasKit = CanvasKitRes;
+  }
   fontProvider = sk.CanvasKit.TypefaceFontProvider.Make();
 
   return sk.CanvasKit;
@@ -83,15 +87,17 @@ export function getFontProvider() {
   return fontProvider!;
 }
 
-defaultFontFiles.forEach((filename, idx) => {
-  Promise.all([fetch(process.env.PUBLIC_PATH + filename), CanvaskitPromised])
-    .then(([res]) => res.arrayBuffer())
-    .then((buffer) => {
-      const fontName = defaultFonts[idx];
-      fontProvider!.registerFont(buffer, fontName);
-      fontLoaded.next(fontName);
-    });
-});
+function prefetchFonts() {
+  defaultFontFiles.forEach((filename, idx) => {
+    Promise.all([fetch(process.env.PUBLIC_PATH + filename), CanvaskitPromised])
+      .then(([res]) => res.arrayBuffer())
+      .then((buffer) => {
+        const fontName = defaultFonts[idx];
+        fontProvider!.registerFont(buffer, fontName);
+        fontLoaded.next(fontName);
+      });
+  });
+}
 
 export function newColorPaint(color: InputColor) {
   const paint = new sk.CanvasKit.Paint();
