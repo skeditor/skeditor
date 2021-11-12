@@ -134,6 +134,15 @@ export class SkyModel extends Disposable {
     return await this.readJsonFile(this.zipFile, fileRef._ref + '.json');
   }
 
+  /**
+   * For debug so it must return a page
+   */
+  queryPage(name: string) {
+    const page = this.pages.find((page) => page.name === name);
+    invariant(page);
+    return page;
+  }
+
   dispose() {
     super.dispose();
     this.imageCache.clear();

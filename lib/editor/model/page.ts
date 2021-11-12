@@ -1,3 +1,4 @@
+import invariant from 'ts-invariant';
 import { SkyBaseGroup, SketchFormat, ClassValue, SkyBaseLayer } from '.';
 import { Point } from '../base/point';
 
@@ -43,5 +44,23 @@ export class SkyPage extends SkyBaseGroup<SketchFormat.Page> {
     selected.recUp((layer) => {
       layer.isOutlineExpanded = true;
     });
+  }
+
+  /**
+   * For debug, so it must return a layer
+   */
+  queryLayer(name: string) {
+    const queue = [] as SkyBaseLayer[];
+    queue.push(...this.layers);
+    while (queue.length) {
+      const top = queue.shift()!;
+      if (top.name === name) {
+        return top;
+      }
+      if (top instanceof SkyBaseGroup) {
+        queue.push(...top.layers);
+      }
+    }
+    invariant(false);
   }
 }
