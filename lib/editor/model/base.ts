@@ -117,7 +117,7 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
   hasClippingMask = false;
   shouldBreakMaskChain = false;
 
-  isVisible = true;
+  private _isVisible = true;
 
   resizingConstraint = ResizingConstraints.Unset;
 
@@ -163,7 +163,7 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
       this.style = new SkyStyle().fromJson(data.style);
     }
 
-    this.isVisible = data.isVisible;
+    this._isVisible = data.isVisible;
 
     this.hasClippingMask = data.hasClippingMask ?? this.hasClippingMask;
 
@@ -175,6 +175,17 @@ export abstract class SkyBaseLayer<T extends SketchFormat.AnyLayer = SketchForma
     this._name = data.name;
     this._fromJson(data);
     return this;
+  }
+
+  get isVisible() {
+    return this._isVisible;
+  }
+
+  set isVisible(val: boolean) {
+    if (val !== this._isVisible) {
+      this._isVisible = val;
+      this.ctx.imageLoaded$.next();
+    }
   }
 
   get sharedStyle(): SkyStyle | undefined {
