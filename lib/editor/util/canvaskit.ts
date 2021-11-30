@@ -26,7 +26,6 @@ let canvaskitWasm: string | undefined = undefined;
 if (process.env.NODE_ENV !== 'test') {
   canvaskitWasm = require('!!file-loader!@skeditor/canvaskit-wasm/bin/canvaskit.wasm');
   canvaskitWasm = (canvaskitWasm as unknown as { default: string }).default || canvaskitWasm;
-  prefetchFonts();
 }
 
 const sk = {} as {
@@ -98,6 +97,9 @@ function prefetchFonts() {
       });
   });
 }
+
+// 一进入页面就会加载字体，在优化字体加载后这个逻辑要去掉
+prefetchFonts();
 
 export function newColorPaint(color: InputColor) {
   const paint = new sk.CanvasKit.Paint();

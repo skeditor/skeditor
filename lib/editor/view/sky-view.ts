@@ -194,7 +194,7 @@ export class SkyView extends Disposable {
     canvasEl.width = canvasWidth;
     canvasEl.height = canvasHeight;
 
-    this.markDirty();
+    this.renderImmediately();
   }
 
   /**
@@ -276,6 +276,16 @@ export class SkyView extends Disposable {
 
   markDirty() {
     this.dirty = true;
+  }
+
+  /**
+   * 立即重绘，resize 的时候使用。
+   * 确保 resize 引起的变更和 render 引起的变更在同一帧起效。
+   * 如果不这样会造成画面抖动。
+   */
+  private renderImmediately() {
+    this.dirty = true;
+    this.render();
   }
 
   // 设置为当前使用的 canvas
